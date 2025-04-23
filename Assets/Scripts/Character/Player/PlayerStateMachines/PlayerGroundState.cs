@@ -1,8 +1,12 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerGroundState : PlayerBaseState
 {
+    protected float lastMoveInputTime;
+    protected float moveInputGracePeriod = 0.2f; // 입력 유예 시간
+
     public PlayerGroundState(PlayerStateMachine stateMachine) : base(stateMachine)
     {
     }
@@ -31,14 +35,12 @@ public class PlayerGroundState : PlayerBaseState
 
     protected override void OnMoveCanceled(InputAction.CallbackContext context)
     {
-        if (stateMachine.MoveInput == Vector2.zero)
-        {
-            return;
-        }
-
-        stateMachine.ChangeState(stateMachine.IdleState);
-
         base.OnMoveCanceled(context);
+        lastMoveInputTime = Time.time;
+
+        // 일정 시간 안에 다시 입력이 들어오면 Idle로 전이하지 않음
+        stateMachine.Player.StartCoroutine(DelayedIdleCheck());
+
     }
 
     protected virtual void OnMove()
@@ -46,5 +48,14 @@ public class PlayerGroundState : PlayerBaseState
         stateMachine.ChangeState(stateMachine.WalkState);
     }
 
+    private IEnumerator DelayedIdleCheck()
+    {
+        yield return new WaitForSeconds(moveInputGracePeriod);
+
+        if (stateMachine.MoveInput == Vector2.zero)
+        {
+            stateMachine.ChangeState(stateMachine.IdleState);
+        }
+    }
 
 }

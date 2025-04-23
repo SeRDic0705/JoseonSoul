@@ -25,8 +25,15 @@ public class PlayerIdleState : PlayerGroundState
 
         if (stateMachine.MoveInput != Vector2.zero)
         {
-            OnMove();
-            return;
+            // 스페이스바(회피키) 계속 누르고 있다면 Run
+            if (stateMachine.Player.Input.PlayerActions.AvoidRun.ReadValue<float>() > 0)
+            {
+                stateMachine.ChangeState(stateMachine.RunState);
+            }
+            else
+            {
+                OnMove();
+            }
         }
     }
 }

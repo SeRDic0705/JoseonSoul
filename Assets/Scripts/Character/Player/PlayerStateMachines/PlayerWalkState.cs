@@ -20,9 +20,9 @@ public class PlayerWalkState : PlayerGroundState
         StopAnim(stateMachine.Player.AnimationData.WalkParameterHash);
     }
 
-    protected override void OnRunStarted(InputAction.CallbackContext context)
+    protected override void OnAvoidStarted(InputAction.CallbackContext context)
     {
-        base.OnRunStarted(context);
-        stateMachine.ChangeState(stateMachine.RunState);
+        base.OnAvoidStarted(context);
+        stateMachine.ChangeState(stateMachine.AvoidState);
     }
 }

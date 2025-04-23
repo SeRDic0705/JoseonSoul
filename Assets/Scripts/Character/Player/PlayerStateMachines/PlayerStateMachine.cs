@@ -7,6 +7,7 @@ public class PlayerStateMachine : StateMachine
     // States
     public PlayerIdleState IdleState { get; }
     public PlayerWalkState WalkState { get; }
+    public PlayerAvoidState AvoidState { get; }
     public PlayerRunState RunState { get; }
 
     public Vector2 MoveInput { get; set; }
@@ -23,6 +24,7 @@ public class PlayerStateMachine : StateMachine
 
         IdleState = new PlayerIdleState(this);
         WalkState = new PlayerWalkState(this);
+        AvoidState = new PlayerAvoidState(this);
         RunState = new PlayerRunState(this);
 
         MainCameraTransform = Camera.main.transform;

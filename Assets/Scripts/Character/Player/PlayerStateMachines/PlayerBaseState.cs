@@ -42,14 +42,14 @@ public class PlayerBaseState : IState
     {
         PlayerInput input = stateMachine.Player.Input;
         input.PlayerActions.Move.canceled += OnMoveCanceled;
-        input.PlayerActions.Run.started += OnRunStarted;
+        input.PlayerActions.AvoidRun.started += OnAvoidStarted;
     }
 
     protected virtual void RemoveInputActionsCallback()
     {
         PlayerInput input = stateMachine.Player.Input;
         input.PlayerActions.Move.canceled -= OnMoveCanceled;
-        input.PlayerActions.Run.started -= OnRunStarted;
+        input.PlayerActions.AvoidRun.started -= OnAvoidStarted;
     }
 
     protected virtual void OnMoveCanceled(InputAction.CallbackContext context)
@@ -57,7 +57,7 @@ public class PlayerBaseState : IState
 
     }
 
-    protected virtual void OnRunStarted(InputAction.CallbackContext context)
+    protected virtual void OnAvoidStarted(InputAction.CallbackContext context)
     {
         
     }
