@@ -8,6 +8,8 @@ public class CameraController : MonoBehaviour
     [Header("Target Settings")]
     [SerializeField] private Transform target; // 카메라가 바라볼 대상 (Player 머리 위 CameraTarget)
 
+    private Vector3 currentTargetPosition;
+
 
     private InputActions inputActions; // 카메라용 입력 액션 인스턴스
     private InputAction lookAction; // 마우스/패드 Look 입력
@@ -27,6 +29,8 @@ public class CameraController : MonoBehaviour
 
         inputActions = new InputActions(); // 입력 액션 생성
         lookAction = inputActions.Player.Look; // Look 액션 가져오기
+
+        currentTargetPosition = target.position;
     }
 
     private void OnEnable()
@@ -46,6 +50,7 @@ public class CameraController : MonoBehaviour
 
     private void LateUpdate()
     {
+        HandleTargetFollowing(); // 타겟 따라가기 먼저
         HandleCamera(); // 카메라 위치 및 방향 업데이트
     }
 
@@ -61,13 +66,33 @@ public class CameraController : MonoBehaviour
         pitch = Mathf.Clamp(pitch, Data.pitchLimits.x, Data.pitchLimits.y);
     }
 
+    private void HandleTargetFollowing()
+    {
+        // 화면에서 타겟이 어디 있는지 구하기
+        Vector3 viewportPos = Camera.main.WorldToViewportPoint(target.position);
+
+        // (0.5, 0.5) = 화면 정중앙
+        Vector2 offsetFromCenter = new Vector2(viewportPos.x - 0.5f, viewportPos.y - 0.5f);
+
+        // 중심에서 얼마나 벗어났는지 거리
+        float distanceFromCenter = offsetFromCenter.magnitude;
+
+        if (distanceFromCenter > Data.deadZoneRadius)
+        {
+            // 데드존을 벗어났으면 타겟 위치를 부드럽게 따라간다
+            currentTargetPosition = Vector3.Lerp(currentTargetPosition, target.position, Time.deltaTime * Data.followSpeed);
+        }
+        // else: 벗어나지 않으면 currentTargetPosition 그대로 유지
+    }
+
+
     // 카메라 위치와 회전 적용
     private void HandleCamera()
     {
         Quaternion rotation = Quaternion.Euler(pitch, yaw, 0f); // pitch, yaw 기반 회전 생성
-        Vector3 targetPosition = target.position + rotation * Data.cameraOffset; // 회전된 offset 위치 계산
+        Vector3 targetPosition = currentTargetPosition + rotation * Data.cameraOffset; // 회전된 offset 위치 계산
 
         transform.position = targetPosition; // 카메라 위치 이동
-        transform.LookAt(target.position);   // 카메라가 target 바라보게 설정
+        transform.LookAt(currentTargetPosition);   // 카메라가 target 바라보게 설정
     }
 }
