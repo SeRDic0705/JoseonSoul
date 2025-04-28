@@ -17,3 +17,11 @@ MonoBehaviour:
   <xSensitivity>k__BackingField: 20
   <ySensitivity>k__BackingField: 20
   pitchLimits: {x: -80, y: 30}
+  deadZoneRadius: 0.01
+  followSpeed: 10
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 64
+  cameraRadius: 0.3
+  collisionOffset: 0.2
+  cameraAdjustSpeed: 10
