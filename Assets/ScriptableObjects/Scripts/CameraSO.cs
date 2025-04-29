@@ -19,6 +19,6 @@ public class CameraSO : ScriptableObject
     [Header("Collision Settings")]
     [SerializeField] public LayerMask collisionMask; // 충돌 체크할 레이어
     [SerializeField][Range(0.01f, 1f)] public float cameraRadius = 0.3f; // 스피어캐스트 반지름
-    [SerializeField][Range(0f, 1f)] public float collisionOffset = 0.2f; // 벽과 살짝 거리두기
+    [SerializeField][Range(0f, 1f)] public float collisionOffset = 0.2f; // 벽에 너무 딱 붙지 않게 최소 거리 유지
     [SerializeField][Range(0f, 20f)] public float cameraAdjustSpeed = 10f; // 카메라 이동 보간 속도
 }

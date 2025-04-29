@@ -102,23 +102,30 @@ public class CameraController : MonoBehaviour
     private void HandleCamera()
     {
         Quaternion rotation = Quaternion.Euler(pitch, yaw, 0f);
-        Vector3 desiredCameraPos = currentTargetPosition + rotation * (Data.cameraOffset.normalized * Data.cameraOffset.magnitude);
+        Vector3 desiredCameraPos = currentTargetPosition + rotation * Data.cameraOffset;
 
-        Vector3 direction = (desiredCameraPos - currentTargetPosition).normalized;
-        float targetDistance = Data.cameraOffset.magnitude;
-
-        // 충돌 감지 (SphereCast)
-        if (Physics.SphereCast(currentTargetPosition, Data.cameraRadius, direction, out RaycastHit hit, Data.cameraOffset.magnitude, Data.collisionMask))
-        {
-            targetDistance = hit.distance - Data.collisionOffset;
-        }
-
-        // 현재 거리 부드럽게 보간
-        currentDistance = Mathf.Lerp(currentDistance, Mathf.Clamp(targetDistance, 0.5f, Data.cameraOffset.magnitude), Time.deltaTime * Data.cameraAdjustSpeed);
-
-        Vector3 finalCameraPos = currentTargetPosition + rotation * (Data.cameraOffset.normalized * currentDistance);
+        // 충돌이 있으면 충돌 지점으로 당긴다
+        Vector3 finalCameraPos = AdjustCameraCollision(currentTargetPosition, desiredCameraPos);
 
         transform.position = finalCameraPos;
         transform.LookAt(currentTargetPosition);
+    }
+
+    // 충돌 감지 및 카메라 위치 조정
+    private Vector3 AdjustCameraCollision(Vector3 from, Vector3 to)
+    {
+        Vector3 direction = (to - from).normalized;
+        float maxDistance = Vector3.Distance(from, to); // 원래 떨어져야 할 거리
+
+        // SphereCast를 사용해 충돌 감지
+        if (Physics.SphereCast(from, Data.cameraRadius, direction, out RaycastHit hit, maxDistance, Data.collisionMask))
+        {
+            // 충돌 지점 바로 앞까지 카메라를 당긴다
+            return from + direction * (hit.distance - Data.collisionOffset);
+        }
+
+
+        // 충돌 없으면 원래 위치 반환
+        return to;
     }
 }
