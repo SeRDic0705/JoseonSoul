@@ -93,7 +93,11 @@ public class PlayerBaseState : IState
     private void Move(Vector3 moveDir)
     {
         float moveSpeed = GetMoveSpeed();
-        stateMachine.Player.Controller.Move(moveDir * moveSpeed * Time.deltaTime);
+        stateMachine.Player.Controller.Move(
+        ((moveDir * moveSpeed)
+        + stateMachine.Player.ForceReceiver.Movement)
+        * Time.deltaTime
+        );
     }
 
     private void Rotate(Vector3 moveDir)
