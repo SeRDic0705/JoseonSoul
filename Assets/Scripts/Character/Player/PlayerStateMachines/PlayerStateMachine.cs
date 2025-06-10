@@ -9,6 +9,7 @@ public class PlayerStateMachine : StateMachine
     public PlayerWalkState WalkState { get; }
     public PlayerAvoidState AvoidState { get; }
     public PlayerRunState RunState { get; }
+    public PlayerComboState AttackState { get; }
 
     public Vector2 MoveInput { get; set; }
     public float MoveSpeed { get; private set; }
@@ -16,6 +17,10 @@ public class PlayerStateMachine : StateMachine
     public float MoveSpeedModifier { get; set;} = 1f;
 
     public float JumpForce { get; set; }
+
+    public bool IsAttacking { get; set; }
+    public int ComboIndex { get; set; }
+
     public Transform MainCameraTransform { get; set; }
 
     public PlayerStateMachine(Player player)
@@ -26,6 +31,7 @@ public class PlayerStateMachine : StateMachine
         WalkState = new PlayerWalkState(this);
         AvoidState = new PlayerAvoidState(this);
         RunState = new PlayerRunState(this);
+        AttackState = new PlayerComboState(this);
 
         MainCameraTransform = Camera.main.transform;
 
