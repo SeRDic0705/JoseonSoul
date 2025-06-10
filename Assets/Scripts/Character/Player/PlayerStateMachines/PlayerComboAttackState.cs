@@ -1,13 +1,13 @@
 using UnityEngine;
 
-public class PlayerComboState : PlayerAttackState
+public class PlayerComboAttackState : PlayerAttackState
 {
     private bool alreadyAppliedForce;
     private bool alreadyApplyCombo;
 
     AttackInfo attackInfo;
 
-    public PlayerComboState(PlayerStateMachine playerStateMachine) : base(playerStateMachine)
+    public PlayerComboAttackState(PlayerStateMachine playerStateMachine) : base(playerStateMachine)
     {
 
     }
@@ -15,7 +15,10 @@ public class PlayerComboState : PlayerAttackState
     public override void Enter()
     {
         base.Enter();
-        StartAnim(stateMachine.Player.AnimationData.ComboParameterHash);
+        StartAnim(stateMachine.Player.AnimationData.ComboAttackParameterHash);
+
+        alreadyApplyCombo = false;  // 진입할 때, 정보 초기화
+        alreadyAppliedForce = false;
 
         int comboIndex = stateMachine.ComboIndex;
         attackInfo = stateMachine.Player.Data.AttackData.GetAttackInfo(comboIndex);
@@ -25,7 +28,7 @@ public class PlayerComboState : PlayerAttackState
     public override void Exit()
     {
         base.Exit();
-        StopAnim(stateMachine.Player.AnimationData.ComboParameterHash);
+        StopAnim(stateMachine.Player.AnimationData.ComboAttackParameterHash);
 
         if (!alreadyApplyCombo)
         {
@@ -70,7 +73,7 @@ public class PlayerComboState : PlayerAttackState
             if (alreadyApplyCombo)
             {
                 stateMachine.ComboIndex = attackInfo.ComboStateIndex;
-                stateMachine.ChangeState(stateMachine.AttackState);
+                stateMachine.ChangeState(stateMachine.ComboAttackState);
             }
             else
             {

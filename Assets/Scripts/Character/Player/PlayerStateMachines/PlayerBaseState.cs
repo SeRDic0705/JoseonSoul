@@ -150,16 +150,16 @@ public class PlayerBaseState : IState
 
     protected float GetNormalizedTime(Animator animator, string tag)
     {
-        AnimatorStateInfo currentInfo = animator.GetCurrentAnimatorStateInfo(0);
-        AnimatorStateInfo nextInfo = animator.GetNextAnimatorStateInfo(0);
+        AnimatorStateInfo currentInfo = animator.GetCurrentAnimatorStateInfo(0);    // 현재 애니메이션 정보
+        AnimatorStateInfo nextInfo = animator.GetNextAnimatorStateInfo(0);  // 다음에 올 애니메이션 정보
 
-        if (animator.IsInTransition(0) && nextInfo.IsTag(tag))
+        if (animator.IsInTransition(0) && nextInfo.IsTag(tag))      // 트랜지션 중에 있고, 다음 애니메이션의 태그가 일치한다면(다음 애니메이션이 이미 블렌딩 되고 있다면)
         {
-            return nextInfo.normalizedTime;
+            return nextInfo.normalizedTime;     // 현재 애니메이션이 몇% 재생됐는지
         }
-        else if (!animator.IsInTransition(0) && currentInfo.IsTag(tag))
+        else if (!animator.IsInTransition(0) && currentInfo.IsTag(tag))     // 트랜지션 중이 아니고, 다음 애니메이션의 태그가 일치한다면
         {
-            return currentInfo.normalizedTime;
+            return currentInfo.normalizedTime;  // 다음 애니메이션이 몇% 재생됐는지
         }
         else
         {

@@ -56,7 +56,7 @@ public class PlayerGroundState : PlayerBaseState
 
     protected virtual void OnAttack()
     {
-        stateMachine.ChangeState(stateMachine.AttackState);
+        stateMachine.ChangeState(stateMachine.ComboAttackState);
     }
 
     private IEnumerator DelayedIdleCheck()
