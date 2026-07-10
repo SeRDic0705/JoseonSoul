@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "JoseonSoul.sln"
+    "dotnet.defaultSolution": "JoseonSoul.slnx"
 }
