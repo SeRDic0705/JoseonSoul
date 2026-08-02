@@ -6,7 +6,7 @@ public class CameraController : MonoBehaviour
     [field: SerializeField] public CameraSO Data { get; private set; }
 
     [Header("Target Settings")]
-    [SerializeField] private Transform target; // 카메라가 바라볼 대상 (Player 머리 위 CameraTarget)
+    [SerializeField] private Transform target; // 카메라가 바라볼 대상 (현재 씬에서는 캐릭터 스켈레톤의 Head_M 본)
 
     private Vector3 currentTargetPosition;
 
@@ -16,6 +16,9 @@ public class CameraController : MonoBehaviour
 
     private float yaw;   // 좌우 회전량
     private float pitch; // 상하 회전량
+
+    public float Yaw => yaw;
+    public float Pitch => pitch;
 
     private float currentDistance;  // 현재 카메라 거리
 
