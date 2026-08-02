@@ -58,8 +58,8 @@ CodexBot 지적: 같은 MainCamera에 `CinemachineBrain`과 기존 `CameraContro
    - `SwitchToLegacy()`: 역순.
    - `CinemachineBrain.DefaultBlend`를 `Cut`/`Time=0`으로 고정(전환 중 블렌드 보간 없음).
    - **플레이모드 실측 검증(2026-08-01):** Play 진입 → `SwitchToCinemachine()` 호출 → `legacy.enabled=False`, `brain.enabled=True`, CM 리그 `activeSelf=True`, 카메라가 유효한 위치/회전으로 이동(콘솔 에러/경고 0건) → `SwitchToLegacy()` 호출 → 정상 복귀 확인. **단, 카메라 프레이밍이 레거시와 픽셀 단위로 동일하진 않음** — Sphere 오빗 반경 기반 매핑이라 원래의 고정 오프셋 벡터 방향과 정확히 일치하지 않음(§요구 동작 스펙에서 이미 "완전 재현 아님, 인스펙터 튜닝"으로 합의된 부분).
-   - **수동 처리 남음:** `CinemachineInputAxisController`의 Look 입력을 Cinemachine 기본 액션에서 우리 게임 `InputActions.inputactions`의 Look 액션으로 재바인딩하는 건 에디터에서 마스터가 직접 해야 함(자동화 시 감도 단위 불일치 위험, CodexBot 지적).
    - `useCinemachine` 기본값은 `false`로 유지 — CM 모드는 아직 실제 플레이에 쓰이지 않음, 테스트/토글 목적으로만 존재.
+   - **InputAxisController 재바인딩 완료(2026-08-02, 마스터 지시로 MCP 직접 진행):** `Controllers` 리스트의 "Look Orbit X"/"Look Orbit Y" 항목을 Cinemachine 기본 액션(`CM Default/Look`)에서 프로젝트의 `Assets/InputActions/InputActions.inputactions`에 있는 `Player/Look` 액션(서브에셋 `InputActionReference`)으로 교체, `CancelDeltaTime=true`로 설정(마우스 델타 컨벤션, CodexBot 지적 반영). "Orbit Scale"은 `CM Default/Zoom` 그대로 둠(`RadialAxis.Range`가 (1,1) 고정이라 줌 입력이 기능적으로 무의미). 플레이모드에서 재확인: `boundAction=Player/Look`, `actionEnabled=True`, 에러 0건. **단, 실제 감도 체감(초당 회전각 기준 레거시와 비교)은 자동 검증 불가 — 마스터가 에디터에서 직접 플레이해보고 Gain/Accel/Decel을 인스펙터에서 튜닝해야 함(§요구 동작 스펙 감도 매핑 참조).**
 4. Legacy 경로가 충분히 검증되면 `CameraController.cs` 제거.
 5. `SceneRebuildTool` 갱신은 4단계까지 미루지 않는다 — 단, 이 툴은 이미 실제 씬 구조(`CameraContainer`+`Head_M`)와 어긋나 있었으므로(`Design/Camera_Design.md` §1/§4), 갱신 시 둘 다 바로잡는다. **패키지 커밋과 씬/도구 커밋은 분리** 유지.
 6. 각 단계마다 Unity MCP로 컴파일 확인 + 플레이모드에서 기존 동작과 비교 검증.
