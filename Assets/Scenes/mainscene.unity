@@ -304,6 +304,7 @@ GameObject:
   - component: {fileID: 645527007}
   - component: {fileID: 645527006}
   - component: {fileID: 645527005}
+  - component: {fileID: 645527012}
   m_Layer: 0
   m_Name: CM_ThirdPersonCamera
   m_TagString: Untagged
@@ -409,7 +410,7 @@ MonoBehaviour:
     Enabled: 1
     DistanceLimit: 0
     MinimumOcclusionTime: 0
-    CameraRadius: 0.4
+    CameraRadius: 0.3
     UseFollowTarget:
       Enabled: 0
       YOffset: 0
@@ -439,8 +440,8 @@ MonoBehaviour:
   Composition:
     ScreenPosition: {x: 0, y: 0}
     DeadZone:
-      Enabled: 0
-      Size: {x: 0.2, y: 0.2}
+      Enabled: 1
+      Size: {x: 0.02, y: 0.02}
     HardLimits:
       Enabled: 0
       Size: {x: 0.8, y: 0.8}
@@ -473,7 +474,7 @@ MonoBehaviour:
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
   OrbitStyle: 0
-  Radius: 5
+  Radius: 2.83
   Orbits:
     Top:
       Radius: 2
@@ -574,6 +575,31 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &645527012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 645527004}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ffeb5161b0831147bbc51b0a37f5934, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CinemachineTuningPanel
+  orbitalFollow: {fileID: 645527009}
+  rotationComposer: {fileID: 645527008}
+  deoccluder: {fileID: 645527007}
+  inputAxisController: {fileID: 645527006}
+  radius: 2.83
+  rotationGainX: 1
+  rotationGainY: -1
+  deadZoneSize: 0.02
+  rotationDamping: {x: 0.5, y: 0.5}
+  cameraRadius: 0.3
+  minimumDistanceFromTarget: 0.3
+  obstacleDampingIn: 0.4
+  obstacleDampingOut: 0.2
 --- !u!1001 &665458515
 PrefabInstance:
   m_ObjectHideFlags: 0
