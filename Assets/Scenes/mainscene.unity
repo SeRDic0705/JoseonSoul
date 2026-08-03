@@ -178,11 +178,11 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
-  far clip plane: 1000
-  field of view: 60
+  near clip plane: 0.1
+  far clip plane: 5000
+  field of view: 40
   orthographic: 0
-  orthographic size: 5
+  orthographic size: 10
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -206,8 +206,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 643898349}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0.15212338, y: 0, z: 0, w: 0.98836154}
+  m_LocalPosition: {x: -0.18832, y: 1.306916, z: -1.4344661}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -264,7 +264,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 643898349}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 72ece51f2901e7445ab60da3685d6b5f, type: 3}
   m_Name: 
@@ -311,7 +311,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &645527005
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -400,7 +400,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineDeoccluder
   CollideAgainst:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 64
   IgnoreTag: 
   TransparentLayers:
     serializedVersion: 2
@@ -499,8 +499,8 @@ MonoBehaviour:
     Restrictions: 0
   VerticalAxis:
     Value: 17.5
-    Center: 17.5
-    Range: {x: -10, y: 45}
+    Center: -35
+    Range: {x: -100, y: 30}
     Wrap: 0
     Recentering:
       Enabled: 0
@@ -534,7 +534,7 @@ MonoBehaviour:
     m_Value: 0
   OutputChannel: 1
   StandbyUpdate: 2
-  m_StreamingVersion: 0
+  m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
     TrackingTarget: {fileID: 2093251170074826550}
@@ -568,8 +568,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 645527004}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0.15212338, y: 0, z: 0, w: 0.98836154}
+  m_LocalPosition: {x: -1.5606155e-16, y: 2.408936, z: -2.6904662}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -837,8 +837,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1474079515}
-  - component: {fileID: 1474079514}
-  - component: {fileID: 1474079516}
   m_Layer: 0
   m_Name: CameraContainer
   m_TagString: Untagged
@@ -846,20 +844,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1474079514
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1474079513}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8f6cdb304eff54b4ab458ea5804aec05, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CameraController
-  <Data>k__BackingField: {fileID: 11400000, guid: 0c7d35b65054d574db42eaa3ea219eee, type: 2}
-  target: {fileID: 2093251170074826550}
 --- !u!4 &1474079515
 Transform:
   m_ObjectHideFlags: 0
@@ -876,24 +860,6 @@ Transform:
   - {fileID: 643898352}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1474079516
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1474079513}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: de562e61378995c4a8287667917ef4f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CameraModeSwitcher
-  legacyController: {fileID: 1474079514}
-  brain: {fileID: 643898354}
-  cmRig: {fileID: 645527004}
-  orbitalFollow: {fileID: 645527009}
-  bridge: {fileID: 645527005}
-  useCinemachine: 0
 --- !u!1 &1568897948
 GameObject:
   m_ObjectHideFlags: 0
