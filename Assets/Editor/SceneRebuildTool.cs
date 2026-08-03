@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using Unity.Cinemachine;
 
 public static class SceneRebuildTool
 {
@@ -34,9 +35,9 @@ public static class SceneRebuildTool
             return;
         }
 
-        if (mainCamera.GetComponent<CameraController>() != null)
+        if (mainCamera.GetComponent<CinemachineBrain>() != null || GameObject.Find("CM_ThirdPersonCamera") != null)
         {
-            Debug.LogWarning("[SceneRebuildTool] Main Camera에 이미 CameraController가 있어 중단합니다.");
+            Debug.LogWarning("[SceneRebuildTool] Main Camera에 이미 CinemachineBrain(또는 CM_ThirdPersonCamera)이 있어 중단합니다.");
             return;
         }
 
@@ -78,17 +79,48 @@ public static class SceneRebuildTool
         playerEditor.FindProperty("<Data>k__BackingField").objectReferenceValue = playerSO;
         playerEditor.ApplyModifiedProperties();
 
-        // --- Camera ---
-        var cameraController = Undo.AddComponent<CameraController>(mainCamera.gameObject);
-        var cameraEditor = new SerializedObject(cameraController);
-        cameraEditor.FindProperty("<Data>k__BackingField").objectReferenceValue = cameraSO;
-        cameraEditor.FindProperty("target").objectReferenceValue = cameraTargetGO.transform;
-        cameraEditor.ApplyModifiedProperties();
+        // --- Camera (Cinemachine, 2026-08-03: 레거시 CameraController 대체) ---
+        var brain = Undo.AddComponent<CinemachineBrain>(mainCamera.gameObject);
+        var defaultBlend = brain.DefaultBlend;
+        defaultBlend.Style = CinemachineBlendDefinition.Styles.Cut;
+        defaultBlend.Time = 0f;
+        brain.DefaultBlend = defaultBlend;
+
+        GameObject cmGO = new GameObject("CM_ThirdPersonCamera");
+        Undo.RegisterCreatedObjectUndo(cmGO, "Rebuild Player And Camera");
+
+        var cmCamera = Undo.AddComponent<CinemachineCamera>(cmGO);
+        cmCamera.Follow = cameraTargetGO.transform;
+        cmCamera.LookAt = cameraTargetGO.transform;
+
+        var orbital = Undo.AddComponent<CinemachineOrbitalFollow>(cmGO);
+        orbital.OrbitStyle = CinemachineOrbitalFollow.OrbitStyles.Sphere;
+
+        var rotationComposer = Undo.AddComponent<CinemachineRotationComposer>(cmGO);
+        Undo.AddComponent<CinemachineInputAxisController>(cmGO);
+        var deoccluder = Undo.AddComponent<CinemachineDeoccluder>(cmGO);
+
+        var bridge = Undo.AddComponent<CinemachineCameraBridge>(cmGO);
+        var bridgeEditor = new SerializedObject(bridge);
+        bridgeEditor.FindProperty("<Data>k__BackingField").objectReferenceValue = cameraSO;
+        bridgeEditor.FindProperty("orbitalFollow").objectReferenceValue = orbital;
+        bridgeEditor.FindProperty("rotationComposer").objectReferenceValue = rotationComposer;
+        bridgeEditor.FindProperty("deoccluder").objectReferenceValue = deoccluder;
+        bridgeEditor.ApplyModifiedProperties();
+
+        var tuningPanel = Undo.AddComponent<CinemachineTuningPanel>(cmGO);
+        var tuningEditor = new SerializedObject(tuningPanel);
+        tuningEditor.FindProperty("orbitalFollow").objectReferenceValue = orbital;
+        tuningEditor.FindProperty("rotationComposer").objectReferenceValue = rotationComposer;
+        tuningEditor.FindProperty("deoccluder").objectReferenceValue = deoccluder;
+        tuningEditor.FindProperty("inputAxisController").objectReferenceValue = cmGO.GetComponent<CinemachineInputAxisController>();
+        tuningEditor.ApplyModifiedProperties();
+        tuningPanel.PullFromComponents();
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         Selection.activeGameObject = playerGO;
 
-        Debug.Log("[SceneRebuildTool] Player/Camera 세팅 완료. CharacterController 크기(radius/height/center)를 캐릭터 모델에 맞게 조정한 뒤 Ctrl+S로 씬을 저장하세요.");
+        Debug.Log("[SceneRebuildTool] Player/Camera 세팅 완료. CharacterController 크기(radius/height/center)를 캐릭터 모델에 맞게 조정하고, CinemachineInputAxisController의 Look Orbit X/Y를 Assets/InputActions/InputActions.inputactions의 Player/Look 액션으로 재바인딩한 뒤 Ctrl+S로 씬을 저장하세요.");
     }
 
     [MenuItem("Tools/Joseon/Rebuild Player And Camera", true)]
