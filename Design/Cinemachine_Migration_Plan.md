@@ -61,16 +61,24 @@ CodexBot 지적: 같은 MainCamera에 `CinemachineBrain`과 기존 `CameraContro
    - `useCinemachine` 기본값은 `false`로 유지 — CM 모드는 아직 실제 플레이에 쓰이지 않음, 테스트/토글 목적으로만 존재.
    - **InputAxisController 재바인딩 완료(2026-08-02, 마스터 지시로 MCP 직접 진행):** `Controllers` 리스트의 "Look Orbit X"/"Look Orbit Y" 항목을 Cinemachine 기본 액션(`CM Default/Look`)에서 프로젝트의 `Assets/InputActions/InputActions.inputactions`에 있는 `Player/Look` 액션(서브에셋 `InputActionReference`)으로 교체, `CancelDeltaTime=true`로 설정(마우스 델타 컨벤션, CodexBot 지적 반영). "Orbit Scale"은 `CM Default/Zoom` 그대로 둠(`RadialAxis.Range`가 (1,1) 고정이라 줌 입력이 기능적으로 무의미). 플레이모드에서 재확인: `boundAction=Player/Look`, `actionEnabled=True`, 에러 0건. **단, 실제 감도 체감(초당 회전각 기준 레거시와 비교)은 자동 검증 불가 — 마스터가 에디터에서 직접 플레이해보고 Gain/Accel/Decel을 인스펙터에서 튜닝해야 함(§요구 동작 스펙 감도 매핑 참조).**
    - **`CinemachineTuningPanel.cs` 추가(2026-08-02, 마스터 요청):** `Orbital Follow`/`Rotation Composer`/`Deoccluder`/`Input Axis Controller`에 흩어져 있던 비교·튜닝용 값(오빗 반경, 회전 감도 Gain X/Y, 데드존 크기, 회전 댐핑, 충돌 반경, 최소거리, 진입/복귀 감쇠)을 `CM_ThirdPersonCamera`의 이 컴포넌트 하나에 모아 인스펙터에서 한 번에 조정 가능하게 함. `OnValidate()`가 값 변경 시 즉시 실제 컴포넌트에 반영(플레이모드 중에도 동작). `Pull From Components`/`Push To Components` 컨텍스트 메뉴 제공. 현재 라이브 값으로 초기화 완료.
-4. Legacy 경로가 충분히 검증되면 `CameraController.cs` 제거.
-5. `SceneRebuildTool` 갱신은 4단계까지 미루지 않는다 — 단, 이 툴은 이미 실제 씬 구조(`CameraContainer`+`Head_M`)와 어긋나 있었으므로(`Design/Camera_Design.md` §1/§4), 갱신 시 둘 다 바로잡는다. **패키지 커밋과 씬/도구 커밋은 분리** 유지.
-6. 각 단계마다 Unity MCP로 컴파일 확인 + 플레이모드에서 기존 동작과 비교 검증.
+4. **[완료 2026-08-03]** 마스터가 에디터에서 CM 카메라 테스트 후 만족 확인 → 레거시 완전 제거.
+   - `CameraContainer`에서 `CameraModeSwitcher`/`CameraController` 컴포넌트 제거.
+   - `CinemachineBrain.enabled=true`, `CM_ThirdPersonCamera.SetActive(true)`를 상시 상태로 고정(더 이상 토글 없음).
+   - `CameraController.cs`, `CameraModeSwitcher.cs` 스크립트 파일 삭제(`delete_script` MCP 도구).
+   - 플레이모드 재검증: 에러 0건, `brain.IsValid=True`, 카메라 정상 동작.
+5. **[완료 2026-08-03]** `SceneRebuildTool.cs` 갱신 — 레거시 `CameraController` 생성 코드를 Cinemachine 리그(CinemachineBrain+CinemachineCamera+OrbitalFollow+RotationComposer+InputAxisController+Deoccluder+Bridge+TuningPanel) 생성으로 교체. Follow/LookAt 타겟은 툴이 직접 만드는 `CameraTarget` 오브젝트(모델 독립적) 유지 — 현재 라이브 씬의 `Head_M` 직접 참조와는 별개(`Design/Camera_Design.md` §1 참조, 둘 다 유효한 구성).
+6. 각 단계마다 Unity MCP로 컴파일 확인 + 플레이모드에서 기존 동작과 비교 검증. (전 단계 모두 완료)
 
 ## 영향 범위
 
-- 신규: `manifest.json`(Cinemachine 패키지), 브리지 스크립트, CM 리그 프리팹/씬 오브젝트
-- 변경: `SceneRebuildTool.cs`(카메라 컴포넌트 배선 — 각 단계마다 갱신)
-- 제거 예정(4단계 완료 후): `CameraController.cs`
-- 유지: `CameraSO.cs`(역할 축소 — 초기화용 값 소스)
+- 신규: `manifest.json`(Cinemachine 패키지), `CinemachineCameraBridge.cs`, `CinemachineTuningPanel.cs`, CM 리그 씬 오브젝트
+- 변경: `SceneRebuildTool.cs`(Cinemachine 기반 카메라 리그 생성으로 교체 완료)
+- **제거 완료(2026-08-03):** `CameraController.cs`, `CameraModeSwitcher.cs`
+- 유지: `CameraSO.cs`(역할 축소 — 초기화용 값 소스, 일부 필드는 미사용 상태로 남음 — `Design/Camera_Design.md` §3)
+
+## 마이그레이션 완료 (2026-08-03)
+
+전 단계 완료. Cinemachine이 JoseonSoul의 유일한 카메라 시스템이다. 이 문서는 마이그레이션 히스토리 기록으로 유지하고, 현재 시스템의 As-Is 스펙은 `Design/Camera_Design.md`를 기준으로 본다.
 
 ## 열린 질문 → 해결 방식 (2026-08-01 마스터 확인)
 

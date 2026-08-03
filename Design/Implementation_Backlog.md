@@ -8,13 +8,13 @@
 
 - [ ] `mainscene`에 구현된 캐릭터 이동(FSM)·카메라를 Sword and Shield Pack(Mixamo, `Assets/Sword and Shield Pack/`) 기반 새 씬으로 이식
   - 새 씬 아직 미생성 (현재 씬은 `Assets/Scenes/mainscene.unity` 하나뿐)
-  - `SceneRebuildTool`(Tools/Joseon 메뉴)이 `PlayerSO`/`CameraSO`/`Solider_Fist` 프리팹 경로를 하드코딩하고 있어, 새 애셋팩 기준 캐릭터 프리팹으로 교체 시 이 경로들도 갱신 필요 (`Design/Camera_Design.md` §4)
+  - `SceneRebuildTool`(Tools/Joseon 메뉴)은 2026-08-03 Cinemachine 기반으로 갱신 완료 — `PlayerSO`/`CameraSO`/`Solider_Fist` 프리팹 경로는 여전히 하드코딩이라, 새 애셋팩 기준 캐릭터 프리팹으로 교체 시 이 경로들 갱신 필요
   - Sword and Shield Pack은 애니메이션 클립 위주(idle/walk/run/attack/block/slash/death 등) — 기존 `PlayerAnimationData`/Animator Controller(`SKM_Solider_Fist.controller`)와 파라미터 매핑 재작업 필요
 
 ## 구현됨 (As-Is 문서 있음)
 
 - 캐릭터 이동 FSM: Idle/Walk/Run/Avoid/ComboAttack — `Design/PlayerStateMachine_Design.md`
-- 3인칭 오빗 카메라(데드존 추적 + 충돌 보정) — `Design/Camera_Design.md`
+- Cinemachine 3인칭 오빗 카메라(2026-08-03, 레거시 `CameraController` 대체 완료) — `Design/Camera_Design.md`, `Design/Cinemachine_Migration_Plan.md`
 - 넉백/중력 임팩트 시스템(ForceReceiver) — `Design/ForceReceiver_Design.md`
 - 콤보 공격 데이터 모델(AttackInfo, 콤보 윈도우 타이밍) — `Design/CombatData_Design.md`
 - New Input System 기반 입력(Player/UI 액션맵)

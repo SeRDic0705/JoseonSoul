@@ -21,6 +21,7 @@
 | 입력 | **New Input System** 1.19 (`Assets/InputActions/InputActions.inputactions` — Player 맵: Move/Look/Attack/Avoid&Run, UI 맵) — 레거시 `UnityEngine.Input` 사용 금지 |
 | 인스펙터/직렬화 | Odin 없음. `[field: SerializeField]` 오토프로퍼티 패턴 + `[Range]`로 인스펙터 튜닝값 노출 |
 | 캐릭터 이동 | `CharacterController` + 커스텀 `ForceReceiver`(중력·임팩트 합산), Rigidbody는 kinematic(충돌 트리거용) |
+| 카메라 | **Cinemachine 3.1.7** (`com.unity.cinemachine`) — 커스텀 `CameraController`는 2026-08-03 제거됨(`Design/Cinemachine_Migration_Plan.md`) |
 | 검증 도구 | **Unity MCP** (CoplayDev, `com.coplaydev.unity-mcp`) — 컴파일 확인·콘솔 로그·에셋/씬 조작. HTTP 브리지 `http://127.0.0.1:8080/mcp` |
 | 패키지 | AI Navigation(미사용), FBX Exporter, Timeline, Visual Scripting — 설치는 돼 있으나 현재 코드에서 미사용 |
 | 프로젝트 경로 | `D:\Unity\JoseonSoul` |
@@ -32,7 +33,7 @@
 |---|---|
 | `Design/PlayerStateMachine_Design.md` | IState/StateMachine 기반 FSM, 상태 전이 그래프, 콤보 진행 로직 |
 | `Design/CombatData_Design.md` | AttackInfo 콤보 데이터 모델. 히트 판정/데미지 적용은 **미구현** — 설계 전 확정 필요 |
-| `Design/Camera_Design.md` | 오빗 카메라(데드존 추적 + 스피어캐스트 충돌 보정) |
+| `Design/Camera_Design.md` | Cinemachine 3인칭 오빗 카메라(OrbitalFollow/RotationComposer/Deoccluder), CameraSO 연동 브리지 |
 | `Design/ForceReceiver_Design.md` | 중력·넉백·전진 임팩트를 합산하는 이동 보정 시스템 |
 | `Design/Git_Convention.md` | 브랜치(main/develop/토픽 브랜치)·커밋·PR 워크플로우 |
 | `Design/Implementation_Backlog.md` | 구현됨/진행중/미구현 현황 |
@@ -46,7 +47,7 @@ Assets/
 ├─ Scripts/
 │  ├─ StateMachines/            # 범용 FSM 베이스 (IState, StateMachine)
 │  └─ Character/Player/
-│     ├─ (Player.cs, PlayerInput.cs, CameraController.cs, ForceReceiver.cs, PlayerAnimationData.cs)
+│     ├─ (Player.cs, PlayerInput.cs, ForceReceiver.cs, PlayerAnimationData.cs, CinemachineCameraBridge.cs, CinemachineTuningPanel.cs)
 │     └─ PlayerStateMachines/   # PlayerStateMachine + 개별 State 클래스
 ├─ ScriptableObjects/
 │  ├─ Scripts/                  # SO 클래스 정의 (PlayerSO, CameraSO, PlayerGroundData 등)
@@ -74,7 +75,7 @@ Assets/
 1. **ScriptableObject = 읽기 전용 데이터.** `PlayerSO`/`CameraSO`와 그 하위 데이터 클래스(`PlayerGroundData` 등)는 런타임에 수정하지 않는다. 가변 상태(MoveInput, ComboIndex, IsAttacking 등)는 `PlayerStateMachine`이 보유.
 2. **FSM은 `IState`/`StateMachine` 범용 베이스 위에 짓는다.** 캐릭터별 상태머신(`PlayerStateMachine`)이 상태 인스턴스와 공유 런타임 값을 들고, 개별 State는 `PlayerBaseState` 계층에서 파생.
 3. **이동력은 `ForceReceiver`로 합산.** 중력·넉백·공격 전진력 등 순간적 힘은 상태 코드가 직접 `CharacterController.Move()`를 건드리지 않고 `ForceReceiver.AddForce`/`Jump`를 통해 반영한다.
-4. **카메라는 `CameraSO` 데이터로 완전히 파라미터화.** 하드코딩된 상수 없이 오프셋/감도/데드존/충돌 값을 SO에서 읽는다.
+4. **카메라는 Cinemachine(2026-08-03부터, `Design/Cinemachine_Migration_Plan.md` 참조) + `CinemachineCameraBridge`로 파라미터화.** `CameraSO`가 초기값 소스, 실제 실시간 튜닝(오빗 반경/감도/데드존/충돌)은 `CinemachineTuningPanel`에서 인스펙터로 조정한다.
 5. **에디터 자동화 도구(`SceneRebuildTool` 등)는 하드코딩 경로 의존을 명시적으로 남긴다** — 애셋 경로를 바꾸면 해당 툴도 함께 갱신.
 
 ## 7. 작업 워크플로우 (중요)
