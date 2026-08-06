@@ -22,6 +22,7 @@ public class PlayerIdleState : PlayerGroundState
     public override void Update()
     {
         base.Update();
+        if (stateMachine.CurrentState != this) return;    // base.Update()에서 이미 다른 상태로 전이됨 — 여기서 멈춤
 
         if (stateMachine.MoveInput != Vector2.zero)
         {

@@ -3,6 +3,8 @@ public abstract class StateMachine
 {
     protected IState currentState;
 
+    public IState CurrentState => currentState;
+
     public void ChangeState(IState newState)
     {
         currentState?.Exit();   // 이전 상태 종료

@@ -24,6 +24,7 @@ public class PlayerRunState : PlayerGroundState
     public override void Update()
     {
         base.Update();
+        if (stateMachine.CurrentState != this) return;    // base.Update()에서 이미 다른 상태로 전이됨 — 여기서 멈춤
 
         // 회피 키를 놓았을 때 Walk 상태로 전이
         if (stateMachine.Player.Input.PlayerActions.AvoidRun.ReadValue<float>() <= 0f)
