@@ -7,10 +7,11 @@ using UnityEngine;
 public class PlayerAttackData
 {
     [field: SerializeField] public List<AttackInfo> AttackDatas { get; private set; }
+    [field: SerializeField] public AttackInfo DodgeAttackInfo { get; private set; }    // 회피공격 전용 데이터(콤보 배열과 별개, 독립 튜닝)
+
     public int GetAttackInfoCount() { return AttackDatas.Count; }
     public AttackInfo GetAttackInfo(int index)
-    { 
-        Debug.Log(index);
+    {
         return AttackDatas[index];
     }
 

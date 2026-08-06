@@ -41,3 +41,10 @@ MonoBehaviour:
       <ForceTransitionTime>k__BackingField: 0
       <Force>k__BackingField: 0
       <Damage>k__BackingField: 0
+    <DodgeAttackInfo>k__BackingField:
+      <AttackName>k__BackingField: DodgeAttack_PLACEHOLDER
+      <ComboStateIndex>k__BackingField: 1
+      <ComboTransitionTime>k__BackingField: 0.5
+      <ForceTransitionTime>k__BackingField: 0.3
+      <Force>k__BackingField: 1
+      <Damage>k__BackingField: 0

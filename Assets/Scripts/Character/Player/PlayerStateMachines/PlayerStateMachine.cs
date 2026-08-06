@@ -10,6 +10,7 @@ public class PlayerStateMachine : StateMachine
     public PlayerAvoidState AvoidState { get; }
     public PlayerRunState RunState { get; }
     public PlayerComboAttackState ComboAttackState { get; }
+    public PlayerDodgeAttackState DodgeAttackState { get; }
 
     public Vector2 MoveInput { get; set; }
     public float MoveSpeed { get; private set; }
@@ -32,6 +33,7 @@ public class PlayerStateMachine : StateMachine
         AvoidState = new PlayerAvoidState(this);
         RunState = new PlayerRunState(this);
         ComboAttackState = new PlayerComboAttackState(this);
+        DodgeAttackState = new PlayerDodgeAttackState(this);
 
         MainCameraTransform = Camera.main.transform;
 
