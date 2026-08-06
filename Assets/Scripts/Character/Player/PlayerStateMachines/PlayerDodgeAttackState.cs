@@ -1,11 +1,8 @@
 using UnityEngine;
 
+// 콤보 창 개념이 없는 단발 공격 상태라 IComboWindowEventReceiver는 구현하지 않음 — Force만 이벤트/폴백 배타 실행(PlayerAttackState)
 public class PlayerDodgeAttackState : PlayerAttackState
 {
-    private bool alreadyAppliedForce;
-
-    private AttackInfo attackInfo;
-
     public PlayerDodgeAttackState(PlayerStateMachine playerStateMachine) : base(playerStateMachine)
     {
     }
@@ -15,7 +12,6 @@ public class PlayerDodgeAttackState : PlayerAttackState
         base.Enter();
         StartAnim(stateMachine.Player.AnimationData.DodgeAttackParameterHash);
 
-        alreadyAppliedForce = false;
         attackInfo = stateMachine.Player.Data.AttackData.DodgeAttackInfo;
     }
 
@@ -23,15 +19,6 @@ public class PlayerDodgeAttackState : PlayerAttackState
     {
         base.Exit();
         StopAnim(stateMachine.Player.AnimationData.DodgeAttackParameterHash);
-    }
-
-    private void TryApplyForce()
-    {
-        if (alreadyAppliedForce) return;
-        alreadyAppliedForce = true;
-
-        stateMachine.Player.ForceReceiver.Reset();
-        stateMachine.Player.ForceReceiver.AddForce(stateMachine.Player.transform.forward * attackInfo.Force);
     }
 
     public override void Update()
@@ -44,8 +31,8 @@ public class PlayerDodgeAttackState : PlayerAttackState
         float normalizedTime = GetNormalizedTime(stateMachine.Player.Animator, "Attack");
         if (normalizedTime < 1f)
         {
-            if (normalizedTime >= attackInfo.ForceTransitionTime)
-                TryApplyForce();
+            if (!forceHandled && normalizedTime >= attackInfo.ForceTransitionTime)
+                OnApplyForce();
         }
         else
         {
