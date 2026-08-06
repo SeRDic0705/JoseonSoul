@@ -70,9 +70,13 @@ public class PlayerBaseState : IState
         
     }
 
+    protected virtual bool CanBeInterruptedByAttack => true;    // 이 상태가 공격 입력으로 즉시 전이될 수 있는지 (회피 등은 false로 오버라이드)
+
     protected virtual void OnAttackPerformed(InputAction.CallbackContext obj)
     {
         stateMachine.IsAttacking = true;
+        stateMachine.AttackQueued = true;
+        stateMachine.AttackQueuedTime = Time.time;
     }
 
     protected virtual void OnAttackCanceled(InputAction.CallbackContext obj)

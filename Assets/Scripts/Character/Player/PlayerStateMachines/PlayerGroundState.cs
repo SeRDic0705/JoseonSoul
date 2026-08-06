@@ -27,7 +27,7 @@ public class PlayerGroundState : PlayerBaseState
     {
         base.Update();
 
-        if (stateMachine.IsAttacking)
+        if (stateMachine.IsAttacking && CanBeInterruptedByAttack)
         {
             OnAttack();
             return;

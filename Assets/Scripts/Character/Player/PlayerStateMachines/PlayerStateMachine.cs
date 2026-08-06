@@ -22,6 +22,9 @@ public class PlayerStateMachine : StateMachine
     public bool IsAttacking { get; set; }
     public int ComboIndex { get; set; }
 
+    public bool AttackQueued { get; set; }     // 회피 등 인터럽트 불가 상태 중 눌린 공격 입력 버퍼(원샷)
+    public float AttackQueuedTime { get; set; }
+
     public Transform MainCameraTransform { get; set; }
 
     public PlayerStateMachine(Player player)
