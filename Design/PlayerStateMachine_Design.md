@@ -132,7 +132,11 @@ public override void Update()
 - 콤보 창이 열려 있는 동안(`comboWindowOpen`)에는 매 프레임 `IsAttacking`(계속 누르고 있는지)도 확인해 `comboRequested`를 래치할 수 있다.
 - `OnCloseComboWindow()`에서 `comboRequested && attackInfo.ComboStateIndex != -1`이면 `alreadyApplyCombo = true`로 확정.
 
-**남은 실제 작업(이번 라운드 범위 밖):** 콤보 클립 3개(`anim_attack_light_01/02/03`, `DodgeAttack_PLACEHOLDER`도 01 재사용이라 자동 적용)에 실제 Animation Event 심기. 지금은 전부 폴백(기존 숫자 임계값) 경로로만 동작하며, 이 문서의 §3 상태 전이 그래프·타이밍 감각은 이전과 동일하다.
+**Animation Event 심기 완료(2026-08-07).** `attack_01/02/03.FBX`의 `ModelImporter.clipAnimations[0].events`에 `OnApplyForce`/`OnOpenComboWindow`/`OnCloseComboWindow` 3개씩 추가(`DodgeAttack_PLACEHOLDER`는 attack_01 재사용이라 자동 적용). 이벤트 위치는 기존 폴백 임계값과 동일한 정규화 시간으로 맞췄다(1·2타: Force 0.3/Open 0.5, 3타: Force 0/Open 0.5, 공통 Close 0.95) — **타이밍 감각은 이전과 동일, 실행 경로만 폴백→이벤트로 넘어감.**
+
+> **주의:** `ModelImporterClipAnimation.events`의 `time` 필드는 초 단위가 아니라 **정규화 시간(0~1, `AnimationEvent.time` 자체가 클립 길이 기준 비율)**이다. 처음에 초 단위(예: 0.2초)로 넣었더니 재임포트 후 실제 클립엔 `0.2 × clip.length`(더 짧은 값)로 들어가는 걸 발견해 정정했다 — 다음에 이 클립들 손댈 때 실수하지 않도록 남겨둠.
+
+향후 이벤트 위치를 조정하고 싶으면 위 정규화 시간 값을 바꿔서 같은 방식(ModelImporter 재설정 + SaveAndReimport)으로 재적용하면 된다. 코드/폴백 임계값은 건드릴 필요 없음.
 
 ## 4-1. 회피공격 (`PlayerDodgeAttackState`, 2026-08-06 신규)
 
