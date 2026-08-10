@@ -16,6 +16,7 @@ public class Player : MonoBehaviour
     public ForceReceiver ForceReceiver { get; private set; }
 
     private PlayerStateMachine stateMachine;
+    public PlayerStateMachine StateMachine => stateMachine;
 
 
     private void Awake()

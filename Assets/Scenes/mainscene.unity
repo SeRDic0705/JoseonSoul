@@ -666,8 +666,16 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8840929515484795499, guid: 3dffbea918f8a4e408843c5b302187cc, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3134540720571982857}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3dffbea918f8a4e408843c5b302187cc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 543450653068325049}
   m_SourcePrefab: {fileID: 100100000, guid: 3dffbea918f8a4e408843c5b302187cc, type: 3}
+--- !u!1 &665458516 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 3dffbea918f8a4e408843c5b302187cc, type: 3}
+  m_PrefabInstance: {fileID: 665458515}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &981053108
 GameObject:
   m_ObjectHideFlags: 0
@@ -1141,6 +1149,7 @@ MonoBehaviour:
     attackParameterName: '@Attack'
     heavyAttackParameterName: HeavyAttack
     comboAttackParameterName: ComboAttack
+    dodgeAttackParameterName: DodgeAttack
 --- !u!54 &1748304747
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1315,6 +1324,18 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 3dffbea918f8a4e408843c5b302187cc, type: 3}
   m_PrefabInstance: {fileID: 665458515}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &543450653068325049
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 665458516}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9e88613ddbac9249a8914fa296b0350, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AttackAnimationEventRelay
 --- !u!4 &2093251170074826550 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2093251170684436581, guid: 3dffbea918f8a4e408843c5b302187cc, type: 3}
