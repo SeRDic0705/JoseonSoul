@@ -14,6 +14,7 @@
 ## 구현됨 (As-Is 문서 있음)
 
 - 캐릭터 이동 FSM: Idle/Walk/Run/Avoid/ComboAttack — `Design/PlayerStateMachine_Design.md`
+- 공중 상태(Jump/Fall) + 공중 3단 콤보(2026-08-11, `air-state` 브랜치) — `Design/AirState_Design.md`, `Design/PlayerStateMachine_Design.md` §6
 - Cinemachine 3인칭 오빗 카메라(2026-08-03, 레거시 `CameraController` 대체 완료) — `Design/Camera_Design.md`, `Design/Cinemachine_Migration_Plan.md`
 - 넉백/중력 임팩트 시스템(ForceReceiver) — `Design/ForceReceiver_Design.md`
 - 콤보 공격 데이터 모델(AttackInfo, 콤보 윈도우 타이밍) — `Design/CombatData_Design.md`
@@ -24,8 +25,8 @@
 
 - **히트 판정/데미지 적용** — `AttackInfo.Damage`를 소비하는 코드 없음, 히트박스/헐트박스 컴포넌트 자체가 없음 (`Design/CombatData_Design.md` §2)
 - **적(Enemy) 시스템** — 타입, AI, 체력, 사망 처리 전무. `com.unity.ai.navigation`(AI Navigation) 패키지가 설치돼 있으나 미사용
-- **공중 상태(Jump/Fall)** — `PlayerAirData.JumpForce`, 애니메이션 파라미터는 존재하나 어떤 State도 진입 경로 없음 (`Design/PlayerStateMachine_Design.md` §5)
-- **비콤보 단발 공격 상태(`PlayerAttackState`)** — 클래스는 있으나 실제 진입 경로 없음
+- **비콤보 단발 공격 상태(`PlayerAttackState`)** — 클래스는 있으나 실제 진입 경로 없음(단, Force 이벤트 공용 베이스로는 실사용 중)
+- **Jump/Fall/공중공격 전용 애니메이션 클립** — 현재 Idle/지상공격 클립 재사용 중(placeholder), Animator 그래프·전환조건은 완성
 - **소울라이크 핵심 루프** — 죽음/리스폰, 스태미나, 자원(소울류) 시스템 전혀 없음. 현재는 순수 이동+카메라+콤보 애니메이션 프로토타입 단계
 
 ## 네임스페이스/asmdef (별도 결정 — 이번 문서 정비에 포함 안 함)
