@@ -5,6 +5,6 @@ public class PlayerComboAttackState : PlayerComboAttackStateBase
     }
 
     protected override AttackInfo GetAttackInfo(int comboIndex) => stateMachine.Player.Data.AttackData.GetAttackInfo(comboIndex);
-    protected override IState ComboChainState => stateMachine.ComboAttackState;
+    protected override bool IsAirCombo => false;
     protected override int ComboAnimatorParameterHash => stateMachine.Player.AnimationData.ComboAttackParameterHash;
 }

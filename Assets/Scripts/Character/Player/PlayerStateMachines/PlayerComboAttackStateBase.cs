@@ -21,7 +21,7 @@ public abstract class PlayerComboAttackStateBase : PlayerAttackState, IComboWind
     }
 
     protected abstract AttackInfo GetAttackInfo(int comboIndex);
-    protected abstract IState ComboChainState { get; }    // 콤보 확정 시 재진입할 자기 자신 타입 상태(Ground/Air 각각의 ComboAttackState)
+    protected abstract bool IsAirCombo { get; }    // 지상=false, 공중=true — 콤보 확정 시 목적지 패밀리가 바뀌었는지 판단용
     protected abstract int ComboAnimatorParameterHash { get; }
 
     public override void Enter()
@@ -115,8 +115,17 @@ public abstract class PlayerComboAttackStateBase : PlayerAttackState, IComboWind
 
             if (alreadyApplyCombo)
             {
-                stateMachine.ComboIndex = attackInfo.ComboStateIndex;
-                stateMachine.ChangeState(ComboChainState);
+                // 착지/이륙으로 패밀리(지상↔공중)가 바뀌었으면 콤보를 리셋해 새 패밀리 1타부터,
+                // 같은 패밀리 안에서 이어지면 기존처럼 스윙 번호 유지(Design/AirState_Design.md §8-3 B안)
+                bool destinationIsAir = !stateMachine.Player.Controller.isGrounded;
+                bool familyChanged = destinationIsAir != IsAirCombo;
+
+                stateMachine.ComboIndex = familyChanged ? 0 : attackInfo.ComboStateIndex;
+                if (familyChanged)
+                {
+                    stateMachine.AttackQueued = false;    // 패밀리 전환에 쓰인 입력이 새 1타의 콤보창에서 다시 소비되는 것 방지
+                }
+                stateMachine.ChangeState(destinationIsAir ? stateMachine.AirComboAttackState : stateMachine.ComboAttackState);
             }
             else
             {
