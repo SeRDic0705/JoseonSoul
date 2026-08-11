@@ -28,6 +28,8 @@ public class PlayerStateMachine : StateMachine
 
     public Transform MainCameraTransform { get; set; }
 
+    public Transform LockedTarget => Player.LockOn.CurrentTarget;
+
     public PlayerStateMachine(Player player)
     {
         this.Player = player;

@@ -173,9 +173,22 @@ public class PlayerBaseState : IState
 
     private void Rotate(Vector3 moveDir)
     {
-        if (moveDir != Vector3.zero)
+        Vector3 lookDir;
+
+        if (stateMachine.LockedTarget != null)
         {
-            Quaternion targetRot = Quaternion.LookRotation(moveDir);
+            // 락온 중엔 이동 여부와 무관하게 타겟 쪽을 계속 바라봄(스트레이프 이동)
+            lookDir = stateMachine.LockedTarget.position - stateMachine.Player.transform.position;
+            lookDir.y = 0f;
+        }
+        else
+        {
+            lookDir = moveDir;
+        }
+
+        if (lookDir.sqrMagnitude > 0.0001f)    // 제로 벡터로 LookRotation 호출 방지
+        {
+            Quaternion targetRot = Quaternion.LookRotation(lookDir);
             stateMachine.Player.transform.rotation = Quaternion.Slerp(stateMachine.Player.transform.rotation, targetRot, stateMachine.RotationDamping * Time.deltaTime);
         }
     }
