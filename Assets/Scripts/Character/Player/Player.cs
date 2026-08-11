@@ -15,6 +15,7 @@ public class Player : MonoBehaviour
     public CharacterController Controller { get; private set; }
     public ForceReceiver ForceReceiver { get; private set; }
     public PlayerLockOn LockOn { get; private set; }
+    public PlayerCameraFollowTarget CameraFollowTarget { get; private set; }
 
     private PlayerStateMachine stateMachine;
     public PlayerStateMachine StateMachine => stateMachine;
@@ -30,6 +31,7 @@ public class Player : MonoBehaviour
         Controller = GetComponent<CharacterController>();
         ForceReceiver = GetComponent<ForceReceiver>();
         LockOn = GetComponent<PlayerLockOn>();
+        CameraFollowTarget = GetComponent<PlayerCameraFollowTarget>();
 
         stateMachine = new PlayerStateMachine(this);
         

@@ -26,6 +26,14 @@ public class CinemachineCameraBridge : MonoBehaviour
         if (vcam != null) defaultLookAt = vcam.LookAt;
     }
 
+    private void Start()
+    {
+        // player.CameraFollowTarget.FollowPoint는 그쪽 Awake()에서 생성되므로, 모든 Awake()가
+        // 끝난 뒤 실행이 보장되는 Start()에서 배선(실행 순서 의존 없이 안전).
+        if (vcam != null && player != null && player.CameraFollowTarget != null)
+            vcam.Follow = player.CameraFollowTarget.FollowPoint;
+    }
+
     private void OnEnable()
     {
         Configure();
