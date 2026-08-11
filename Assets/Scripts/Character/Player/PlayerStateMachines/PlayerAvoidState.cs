@@ -9,6 +9,7 @@ public class PlayerAvoidState : PlayerGroundState
     private float avoidStartTime;
 
     protected override bool CanBeInterruptedByAttack => false;    // 회피 재생 중엔 공격으로 즉시 끊기지 않음 — 종료 후 버퍼로 소비
+    protected override bool CanJump => false;    // 회피 중엔 점프 금지(버퍼링 없음 — 그냥 씹힘)
 
     public PlayerAvoidState(PlayerStateMachine stateMachine) : base(stateMachine)
     {
@@ -48,21 +49,7 @@ public class PlayerAvoidState : PlayerGroundState
             yield break;
         }
 
-        bool isHoldingAvoid = stateMachine.Player.Input.PlayerActions.AvoidRun.ReadValue<float>() > 0;
-        bool hasMoveInput = stateMachine.MoveInput != Vector2.zero;
-
-        if (isHoldingAvoid && hasMoveInput)
-        {
-            stateMachine.ChangeState(stateMachine.RunState);
-        }
-        else if (hasMoveInput)
-        {
-            stateMachine.ChangeState(stateMachine.WalkState);
-        }
-        else
-        {
-            stateMachine.ChangeState(stateMachine.IdleState);
-        }
+        ChangeToLocomotionState();
     }
 
 }

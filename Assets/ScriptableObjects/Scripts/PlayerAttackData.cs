@@ -8,11 +8,17 @@ public class PlayerAttackData
 {
     [field: SerializeField] public List<AttackInfo> AttackDatas { get; private set; }
     [field: SerializeField] public AttackInfo DodgeAttackInfo { get; private set; }    // 회피공격 전용 데이터(콤보 배열과 별개, 독립 튜닝)
+    [field: SerializeField] public List<AttackInfo> AirAttackDatas { get; private set; }    // 공중 콤보 전용 데이터(지상과 별도 3단 체인)
 
     public int GetAttackInfoCount() { return AttackDatas.Count; }
     public AttackInfo GetAttackInfo(int index)
     {
         return AttackDatas[index];
+    }
+
+    public AttackInfo GetAirAttackInfo(int index)
+    {
+        return AirAttackDatas[index];
     }
 
 }

@@ -7,6 +7,11 @@ public class PlayerGroundState : PlayerBaseState
     protected float lastMoveInputTime;
     protected float moveInputGracePeriod = 0.2f; // 입력 유예 시간
 
+    // CharacterController.isGrounded가 평지에서도 프레임 단위로 흔들릴 수 있어(실사용 중 확인됨),
+    // 순간적으로 !isGrounded가 잡혀도 곧바로 Fall로 보내지 않고 이 시간만큼 지속돼야 진짜 낙하로 인정한다.
+    private const float notGroundedGracePeriod = 0.15f;
+    private float notGroundedTimer;
+
     public PlayerGroundState(PlayerStateMachine stateMachine) : base(stateMachine)
     {
     }
@@ -14,6 +19,7 @@ public class PlayerGroundState : PlayerBaseState
     public override void Enter()
     {
         base.Enter();
+        notGroundedTimer = 0f;
         StartAnim(stateMachine.Player.AnimationData.GroundParameterHash);
     }
 
@@ -25,13 +31,22 @@ public class PlayerGroundState : PlayerBaseState
 
     public override void Update()
     {
-        base.Update();
-
-        if (stateMachine.IsAttacking && CanBeInterruptedByAttack)
+        // 벼랑 이탈(점프 없이 낙하 시작) — 착지/벼랑 이탈이 공격·점프 입력보다 우선이라 base.Update() 전에 체크
+        if (!stateMachine.Player.Controller.isGrounded && stateMachine.Player.ForceReceiver.Movement.y <= 0f)
         {
-            OnAttack();
-            return;
+            notGroundedTimer += Time.deltaTime;
+            if (notGroundedTimer >= notGroundedGracePeriod)
+            {
+                stateMachine.ChangeState(stateMachine.FallState);
+                return;
+            }
         }
+        else
+        {
+            notGroundedTimer = 0f;
+        }
+
+        base.Update();
     }
 
     public override void PhysicsUpdate()
@@ -54,9 +69,15 @@ public class PlayerGroundState : PlayerBaseState
         stateMachine.ChangeState(stateMachine.WalkState);
     }
 
-    protected virtual void OnAttack()
+    protected override void OnAttack()
     {
+        stateMachine.ComboIndex = 0;    // 체인 재진입이 아닌 새 진입 — 이전 상태 Exit() 정리에만 의존하지 않음(Design/AirState_Design.md §8-4)
         stateMachine.ChangeState(stateMachine.ComboAttackState);
+    }
+
+    protected override void OnJump()
+    {
+        stateMachine.ChangeState(stateMachine.JumpState);
     }
 
     private IEnumerator DelayedIdleCheck()

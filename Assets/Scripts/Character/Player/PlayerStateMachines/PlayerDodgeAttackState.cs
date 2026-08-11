@@ -44,7 +44,7 @@ public class PlayerDodgeAttackState : PlayerAttackState
             }
             else
             {
-                stateMachine.ChangeState(stateMachine.IdleState);
+                ChangeToGroundedOrFall();
             }
         }
     }
