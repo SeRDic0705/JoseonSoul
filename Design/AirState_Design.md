@@ -99,7 +99,15 @@ PlayerBaseState
 **8-3. 중력 정지 — 2026-08-11 도입 당일 제거됨**
 CodexBot 교차검증까지 거쳐 확정했던 불변조건(소유자 단일/Exit 보장/0 고정/멱등/개발빌드 assertion)은 전부 구현·커밋까지 됐으나, 실사용 플레이테스트 후 마스터가 "공중공격 중 제자리에 뜨는 느낌이 안 좋다"며 기능 자체를 제거 요청. `ForceReceiver.SuspendGravity()/ResumeGravity()`, `PlayerAirComboAttackState`의 관련 Enter/Exit 오버라이드 전부 삭제. 이제 공중공격 중에도 중력이 정상 적용돼 궤적이 자연스럽게 이어진다(점프 상승 중 공격하면 계속 올라가다 서서히 낙하, 낙하 중 공격하면 계속 떨어지면서 휘두름). 공격 종료 분기(§8-2, `isGrounded ? 지상복귀 : Fall`)는 애초에 호버와 독립적으로 설계돼 있어 변경 없이 그대로 유지.
 
-**콤보 도중 착지 시 체인 대상(2026-08-11 확인, 1번 안 채택):** 공중 콤보 진행 중 착지해도 `ComboChainState`는 상태별로 고정이라(`PlayerAirComboAttackState`→항상 `AirComboAttackState`) 착지 후 이어쳐도 계속 공중 콤보 데이터로 다음 타가 나간다(예: 2타 도중 착지 후 이으면 3타도 공중 콤보 데이터로). 마스터가 우선 이대로(단순 유지) 진행 후 플레이테스트해서 필요하면 "체이닝 시점에 `isGrounded` 재판정 → 지상 콤보로 전환" 방식(2번 안)으로 바꾸기로 함 — 다만 2번 안은 `ComboStateIndex`가 배열별 로컬 인덱스라 지상/공중 배열을 섞으려면 인덱스 해석 방식을 별도로 설계해야 해서 범위가 더 큼.
+**콤보 도중 착지/이륙 시 체인 대상 (2026-08-11 최종: B안 구현 완료).** 최초엔 1번 안(단순 유지 — `ComboChainState`가 상태별 고정이라 공중 콤보는 착지해도 계속 공중 데이터로 진행)으로 시작했으나, 마스터가 실사용 후 B안(패밀리가 바뀌면 콤보 리셋)으로 변경 지시 → CodexBot 교차검증 거쳐 구현·커밋 완료.
+
+- `ComboChainState`(상태별 고정 프로퍼티) 삭제, `protected abstract bool IsAirCombo { get; }`로 대체.
+- 콤보 확정(`alreadyApplyCombo`) 시점에 `!Controller.isGrounded`(목적지가 공중인지)와 `IsAirCombo`(지금이 공중 콤보인지)를 비교해 `familyChanged` 판정. 패밀리가 바뀌면 `ComboIndex=0`(새 패밀리 1타부터), 안 바뀌면 기존처럼 `attackInfo.ComboStateIndex`(스윙 번호 유지)로 재진입.
+- 패밀리 전환 시 `stateMachine.AttackQueued=false`로 명시적으로 비움 — 전환을 확정시킨 입력이 새 1타의 콤보창에서 다시 래치되는 것 방지(CodexBot 지적, `PlayerAvoidState.Exit()`의 기존 버퍼 유출 방지 패턴과 동일).
+- 대칭 적용: 지상 콤보 도중 벼랑에서 떨어져 이어쳐도 같은 로직으로 공중 1타 리셋.
+- Animator에 `Attack`↔`AirAttack` 직결 루트 전환 2개 신규(`ground`/`Air`를 안 거치고 바로 전환) — 기존 `ground`↔`Attack` 패턴과 동일 방식.
+- **전제(변경 없음):** `AttackDatas`/`AirAttackDatas`는 같은 길이·같은 순번 의미를 유지해야 스윙 번호 유지 케이스가 성립.
+- **오픈 이슈(CodexBot 지적, 테스트 항목):** 이 판정은 타 끝나는 순간 1회성 체크라 `isGrounded` 흔들림 노출 빈도는 낮지만 완전 배제는 아님 — 실사용에서 문제되면 `PlayerGroundState`의 유예 타이머(§8-6)와 비슷한 디바운스 추가 검토.
 
 **8-4. `ComboIndex` 리셋 규칙 (§7 보강)**
 체인 진입(콤보 확정 후 다음 타로 재진입)이 아닌 **모든 "새로 시작하는" 진입점**(`PlayerGroundState`/`PlayerAirState`의 `OnAttack()`)은 상태 전이 직전에 `stateMachine.ComboIndex = 0`을 명시적으로 설정한다. 이전 상태의 `Exit()` 정리에만 의존하지 않음 — 향후 히트스턴 등 비정상 인터럽트가 생겨도 안전.
