@@ -1191,6 +1191,7 @@ GameObject:
   - component: {fileID: 1748304745}
   - component: {fileID: 1748304744}
   - component: {fileID: 1748304749}
+  - component: {fileID: 1748304750}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1333,6 +1334,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLockOn
   player: {fileID: 1748304746}
+--- !u!114 &1748304750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1748304742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82f07b820b384bdb8e747f64bca98792, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCameraFollowTarget
+  player: {fileID: 1748304746}
+  head: {fileID: 2093251170074826550}
+  landingSmoothTime: 0.15
 --- !u!1 &1887416939
 GameObject:
   m_ObjectHideFlags: 0
