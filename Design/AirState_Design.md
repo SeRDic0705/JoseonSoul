@@ -64,7 +64,7 @@ PlayerBaseState
 - **상태:** `PlayerAirAttackState`(`PlayerAttackState`와 형제, `PlayerBaseState` 직속 + `IForceEventReceiver`) → `PlayerAirComboAttackState`(`IComboWindowEventReceiver` 추가). 지상 Attack/ComboAttack과 완전히 대칭 구조. `PlayerAirState`를 상속하지 않음 — 착지 자동판정 로직(`ChangeToLocomotionState`)이 공격 도중 끼어들면 안 되기 때문(지상 공격이 `PlayerGroundState`가 아니라 `PlayerBaseState` 바로 아래 있는 것과 같은 이유).
 - **진입:** Jump/Fall 상태에서 공격 입력이 들어오면(지상과 동일하게 `IsAttacking && CanBeInterruptedByAttack` 체크) 바로 `AirComboAttackState`로 전이. 이 체크 자체는 `PlayerBaseState`로 끌어올려서 지상/공중 양쪽이 공유(현재 `PlayerGroundState`에만 있던 걸 공용화).
 - **콤보 진행/버퍼링/이벤트:** `PlayerComboAttackState`의 콤보창(Open/Close)·`AttackQueued` 버퍼·Animation Event/폴백 배타 실행 로직을 그대로 재사용(복붙 아니라 거의 동일 로직이라 공용화 여지 있음 — 리팩터는 구현 시점에 판단). `ComboIndex` 필드도 지상과 공유(지상 콤보 중엔 공중에, 공중 콤보 중엔 지상에 있을 일이 없어서 안전).
-- **중력 정지:** `ForceReceiver`에 `SuspendGravity()`/`ResumeGravity()` 신규 추가. `PlayerAirAttackState.Enter()`에서 `SuspendGravity()`(수직속도 0으로 고정) + `MoveSpeedModifier=0`(지상 공격과 동일하게 이동 봉쇄), `Exit()`에서 `ResumeGravity()`. 콤보가 이어져서 `AirComboAttackState`를 재진입해도 Exit→Enter가 같은 프레임 내 동기 호출이라 체감상 계속 떠있는 상태 유지.
+- **중력 정지(2026-08-11 도입 → 같은 날 제거, §8-3 참고):** ~~`ForceReceiver`에 `SuspendGravity()`/`ResumeGravity()` 신규 추가...~~ 마스터가 실사용 후 "공중에 머무르는 느낌이 별로"라며 제거 요청 — 이제 공중공격 중에도 중력이 정상 적용된다. `MoveSpeedModifier=0`(좌우 이동 봉쇄)은 지상 공격과 동일하게 유지.
 - **종료:** 애니메이션 종료 시점에 콤보 미확정(입력 없음) 또는 3타(`ComboStateIndex==-1`)까지 끝나면 `PlayerFallState`로 전이(중력 재개, 그 지점부터 다시 낙하 시작 → 이후 착지 판정은 기존 Fall 로직 그대로).
 
 ## 8. CodexBot 교차검증 반영 (2026-08-11 확정)
@@ -96,13 +96,10 @@ PlayerBaseState
 **8-2. 공격류 상태 종료 분기 통일 (§3-4-7 수정)**
 `PlayerComboAttackState`/`PlayerDodgeAttackState`(지상)와 `PlayerAirComboAttackState`(공중) 전부, 콤보 미확정으로 종료될 때 무조건 고정 타겟(Idle/Fall)으로 가지 않고 **`isGrounded` 확인 후 분기**한다. 공중공격 도중 지면에 닿아도 진행 중인 타격은 끝까지 재생하고(캔슬 없음), 그 타격이 끝나는 시점에 이 분기로 판정.
 
-**8-3. 중력 정지 불변조건 (§7 보강)**
-- 소유자는 `PlayerAirAttackState`(및 하위 `PlayerAirComboAttackState`) 단일 — 동시에 다른 주체가 `SuspendGravity()`를 호출하지 않는다.
-- `StateMachine.ChangeState`는 항상 이전 상태 `Exit()`를 보장 호출 — 정상 경로에서 Resume 누락 없음.
-- `SuspendGravity()`는 `verticalVelocity`를 **0으로 고정**(상승/하강 속도 유지 아님, 완전 호버).
-- `ResumeGravity()`는 멱등(중복 호출 무해).
-- 개발 빌드 한정으로 `SuspendGravity()` 중복 호출 시 assertion(`Debug.Assert`)으로 소유권 위반 조기 탐지 — 구현 시 추가.
-- 이 불변조건이 깨지는 경우(정지 주체가 2개 이상으로 늘어남, 예: 그로기 상태 추가)엔 bool → lease/counter로 전환 재검토.
+**8-3. 중력 정지 — 2026-08-11 도입 당일 제거됨**
+CodexBot 교차검증까지 거쳐 확정했던 불변조건(소유자 단일/Exit 보장/0 고정/멱등/개발빌드 assertion)은 전부 구현·커밋까지 됐으나, 실사용 플레이테스트 후 마스터가 "공중공격 중 제자리에 뜨는 느낌이 안 좋다"며 기능 자체를 제거 요청. `ForceReceiver.SuspendGravity()/ResumeGravity()`, `PlayerAirComboAttackState`의 관련 Enter/Exit 오버라이드 전부 삭제. 이제 공중공격 중에도 중력이 정상 적용돼 궤적이 자연스럽게 이어진다(점프 상승 중 공격하면 계속 올라가다 서서히 낙하, 낙하 중 공격하면 계속 떨어지면서 휘두름). 공격 종료 분기(§8-2, `isGrounded ? 지상복귀 : Fall`)는 애초에 호버와 독립적으로 설계돼 있어 변경 없이 그대로 유지.
+
+**콤보 도중 착지 시 체인 대상(2026-08-11 확인, 1번 안 채택):** 공중 콤보 진행 중 착지해도 `ComboChainState`는 상태별로 고정이라(`PlayerAirComboAttackState`→항상 `AirComboAttackState`) 착지 후 이어쳐도 계속 공중 콤보 데이터로 다음 타가 나간다(예: 2타 도중 착지 후 이으면 3타도 공중 콤보 데이터로). 마스터가 우선 이대로(단순 유지) 진행 후 플레이테스트해서 필요하면 "체이닝 시점에 `isGrounded` 재판정 → 지상 콤보로 전환" 방식(2번 안)으로 바꾸기로 함 — 다만 2번 안은 `ComboStateIndex`가 배열별 로컬 인덱스라 지상/공중 배열을 섞으려면 인덱스 해석 방식을 별도로 설계해야 해서 범위가 더 큼.
 
 **8-4. `ComboIndex` 리셋 규칙 (§7 보강)**
 체인 진입(콤보 확정 후 다음 타로 재진입)이 아닌 **모든 "새로 시작하는" 진입점**(`PlayerGroundState`/`PlayerAirState`의 `OnAttack()`)은 상태 전이 직전에 `stateMachine.ComboIndex = 0`을 명시적으로 설정한다. 이전 상태의 `Exit()` 정리에만 의존하지 않음 — 향후 히트스턴 등 비정상 인터럽트가 생겨도 안전.
