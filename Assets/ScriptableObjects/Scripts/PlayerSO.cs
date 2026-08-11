@@ -7,4 +7,5 @@ public class PlayerSO : ScriptableObject
     [field: SerializeField] public PlayerAirData AirData { get; private set; }
 
     [field: SerializeField] public PlayerAttackData AttackData { get; private set; }
+    [field: SerializeField] public PlayerLockOnData LockOnData { get; private set; }
 }
