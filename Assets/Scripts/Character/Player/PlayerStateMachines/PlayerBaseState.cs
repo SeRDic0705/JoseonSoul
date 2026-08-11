@@ -35,6 +35,17 @@ public class PlayerBaseState : IState
     public virtual void Update()
     {
         Move();
+
+        if (stateMachine.IsAttacking && CanBeInterruptedByAttack)
+        {
+            OnAttack();
+            return;
+        }
+
+        if (CanJump && stateMachine.Player.Input.PlayerActions.Jump.WasPerformedThisFrame())
+        {
+            OnJump();
+        }
     }
 
 
@@ -70,7 +81,8 @@ public class PlayerBaseState : IState
         
     }
 
-    protected virtual bool CanBeInterruptedByAttack => true;    // 이 상태가 공격 입력으로 즉시 전이될 수 있는지 (회피 등은 false로 오버라이드)
+    protected virtual bool CanBeInterruptedByAttack => true;    // 이 상태가 공격 입력으로 즉시 전이될 수 있는지 (회피/공격류 등은 false로 오버라이드)
+    protected virtual bool CanJump => true;    // 이 상태에서 점프 입력을 받는지 (회피/공격류/공중류 등은 false로 오버라이드)
 
     protected virtual void OnAttackPerformed(InputAction.CallbackContext obj)
     {
@@ -82,6 +94,18 @@ public class PlayerBaseState : IState
     protected virtual void OnAttackCanceled(InputAction.CallbackContext obj)
     {
         stateMachine.IsAttacking = false;
+    }
+
+    // 공격 입력으로 전이할 목적지 — Ground/Air가 각자의 콤보 상태로 오버라이드. 공격/점프 우선순위는 Update()의 체크 순서(공격 먼저)로 보장.
+    protected virtual void OnAttack()
+    {
+
+    }
+
+    // 점프 입력으로 전이할 목적지 — Ground가 JumpState로 오버라이드.
+    protected virtual void OnJump()
+    {
+
     }
 
     private void ReadMoveInput()
@@ -125,6 +149,26 @@ public class PlayerBaseState : IState
     protected void ForceMove()
     {
         stateMachine.Player.Controller.Move(stateMachine.Player.ForceReceiver.Movement * Time.deltaTime);
+    }
+
+    // 현재 이동입력/AvoidRun 홀드 상태를 보고 Idle/Walk/Run 중 하나로 복귀 — 회피 종료, 착지 등 여러 진입점에서 공용
+    protected void ChangeToLocomotionState()
+    {
+        bool isHoldingAvoidRun = stateMachine.Player.Input.PlayerActions.AvoidRun.ReadValue<float>() > 0f;
+        bool hasMoveInput = stateMachine.MoveInput != Vector2.zero;
+
+        if (isHoldingAvoidRun && hasMoveInput)
+        {
+            stateMachine.ChangeState(stateMachine.RunState);
+        }
+        else if (hasMoveInput)
+        {
+            stateMachine.ChangeState(stateMachine.WalkState);
+        }
+        else
+        {
+            stateMachine.ChangeState(stateMachine.IdleState);
+        }
     }
 
     private void Rotate(Vector3 moveDir)

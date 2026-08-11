@@ -19,6 +19,9 @@ public class PlayerAnimationData
     [SerializeField] private string comboAttackParameterName = "ComboAttack";
     [SerializeField] private string dodgeAttackParameterName = "DodgeAttack";
 
+    [SerializeField] private string airAttackParameterName = "@AirAttack";
+    [SerializeField] private string airComboAttackParameterName = "AirComboAttack";
+
 
     public int GroundParameterHash { get; private set; }
     public int IdleParameterHash { get; private set; }
@@ -34,6 +37,9 @@ public class PlayerAnimationData
     public int HeavyAttackParameterHash { get; private set; }
     public int ComboAttackParameterHash { get; private set; }
     public int DodgeAttackParameterHash { get; private set; }
+
+    public int AirAttackParameterHash { get; private set; }
+    public int AirComboAttackParameterHash { get; private set; }
 
 
     public void Initialize()
@@ -52,6 +58,9 @@ public class PlayerAnimationData
         HeavyAttackParameterHash = Animator.StringToHash(heavyAttackParameterName);
         ComboAttackParameterHash = Animator.StringToHash(comboAttackParameterName);
         DodgeAttackParameterHash = Animator.StringToHash(dodgeAttackParameterName);
+
+        AirAttackParameterHash = Animator.StringToHash(airAttackParameterName);
+        AirComboAttackParameterHash = Animator.StringToHash(airComboAttackParameterName);
 
     }
 
