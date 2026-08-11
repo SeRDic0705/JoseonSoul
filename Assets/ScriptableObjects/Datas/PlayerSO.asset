@@ -48,3 +48,22 @@ MonoBehaviour:
       <ForceTransitionTime>k__BackingField: 0.3
       <Force>k__BackingField: 1
       <Damage>k__BackingField: 0
+    <AirAttackDatas>k__BackingField:
+    - <AttackName>k__BackingField: "공중1타_PLACEHOLDER"
+      <ComboStateIndex>k__BackingField: 1
+      <ComboTransitionTime>k__BackingField: 0.5
+      <ForceTransitionTime>k__BackingField: 0.3
+      <Force>k__BackingField: 1
+      <Damage>k__BackingField: 0
+    - <AttackName>k__BackingField: "공중2타_PLACEHOLDER"
+      <ComboStateIndex>k__BackingField: 2
+      <ComboTransitionTime>k__BackingField: 0.5
+      <ForceTransitionTime>k__BackingField: 0.3
+      <Force>k__BackingField: 1
+      <Damage>k__BackingField: 0
+    - <AttackName>k__BackingField: "공중3타_PLACEHOLDER"
+      <ComboStateIndex>k__BackingField: -1
+      <ComboTransitionTime>k__BackingField: 0.5
+      <ForceTransitionTime>k__BackingField: 0
+      <Force>k__BackingField: 0
+      <Damage>k__BackingField: 0
