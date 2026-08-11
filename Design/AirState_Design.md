@@ -115,6 +115,8 @@ PlayerBaseState
 **8-6. 벼랑 이탈 판정 보정**
 `Ground 상태 → Fall` 조건을 `!isGrounded` 단독이 아니라 `!isGrounded && Movement.y <= 0`로 제한(상승 중 오탐 방지용 방어적 조건 추가). 단, 계단/경사에서 `isGrounded`가 한두 프레임 흔들리는 문제 자체의 근본 해결책은 아님 — 이 AND 조건은 별개 이슈. 흔들림은 여전히 오픈 이슈로 남기고, 플레이테스트 후 필요하면 grace time 추가.
 
+> **2026-08-11 실사용 확인·해결.** 실제 플레이에서 평지에서도(계단/경사가 아니라) 아무 입력이나 주면 `isGrounded`가 프레임 단위로 흔들리면서 Ground↔Fall을 초당 여러 번 오가며 추가 입력이 막히는 심각한 버그로 확인됨 — 예상보다 훨씬 자주 발생. `PlayerGroundState`에 `notGroundedGracePeriod`(0.15초) 도입: `!isGrounded && Movement.y<=0` 조건이 이 시간만큼 **연속으로** 유지돼야 실제 Fall 전이, 그 전엔 `notGroundedTimer`만 누적하고 접지 회복 시 0으로 리셋(상태 재진입 시에도 `Enter()`에서 리셋). 착지 판정(`PlayerAirState`, Air→Ground) 쪽은 대칭 디바운스를 추가하지 않음 — 오탐이 나도 "약간 이르게 착지 인정" 정도라 체감 위험이 낮고, 오히려 Ground 쪽만 막아도 왕복 자체가 끊긴다.
+
 **8-7. 지상/공중 콤보 공용 추상화 (§7 확정)**
 "구현 시점에 판단"이 아니라 지금 확정: `PlayerComboAttackStateBase`(가칭)로 콤보창/버퍼/이벤트 로직을 묶고, 하위 클래스(`PlayerComboAttackState`/`PlayerAirComboAttackState`)는 공격 데이터 소스(`AttackDatas` vs `AirAttackDatas`)·콤보 종료 타겟(§8-2 분기)·중력 정책(공중만 Suspend/Resume)만 오버라이드.
 

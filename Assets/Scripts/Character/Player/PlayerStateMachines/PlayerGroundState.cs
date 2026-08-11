@@ -7,6 +7,11 @@ public class PlayerGroundState : PlayerBaseState
     protected float lastMoveInputTime;
     protected float moveInputGracePeriod = 0.2f; // 입력 유예 시간
 
+    // CharacterController.isGrounded가 평지에서도 프레임 단위로 흔들릴 수 있어(실사용 중 확인됨),
+    // 순간적으로 !isGrounded가 잡혀도 곧바로 Fall로 보내지 않고 이 시간만큼 지속돼야 진짜 낙하로 인정한다.
+    private const float notGroundedGracePeriod = 0.15f;
+    private float notGroundedTimer;
+
     public PlayerGroundState(PlayerStateMachine stateMachine) : base(stateMachine)
     {
     }
@@ -14,6 +19,7 @@ public class PlayerGroundState : PlayerBaseState
     public override void Enter()
     {
         base.Enter();
+        notGroundedTimer = 0f;
         StartAnim(stateMachine.Player.AnimationData.GroundParameterHash);
     }
 
@@ -28,8 +34,16 @@ public class PlayerGroundState : PlayerBaseState
         // 벼랑 이탈(점프 없이 낙하 시작) — 착지/벼랑 이탈이 공격·점프 입력보다 우선이라 base.Update() 전에 체크
         if (!stateMachine.Player.Controller.isGrounded && stateMachine.Player.ForceReceiver.Movement.y <= 0f)
         {
-            stateMachine.ChangeState(stateMachine.FallState);
-            return;
+            notGroundedTimer += Time.deltaTime;
+            if (notGroundedTimer >= notGroundedGracePeriod)
+            {
+                stateMachine.ChangeState(stateMachine.FallState);
+                return;
+            }
+        }
+        else
+        {
+            notGroundedTimer = 0f;
         }
 
         base.Update();
