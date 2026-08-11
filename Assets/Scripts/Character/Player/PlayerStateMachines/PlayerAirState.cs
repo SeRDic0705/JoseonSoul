@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PlayerAirState : PlayerBaseState
+public class PlayerAirState : PlayerBaseState, IAirborneState
 {
     protected override bool CanJump => false;    // 이중 점프 없음
 

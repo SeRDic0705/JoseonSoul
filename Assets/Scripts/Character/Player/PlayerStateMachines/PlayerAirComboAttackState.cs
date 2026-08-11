@@ -1,4 +1,4 @@
-public class PlayerAirComboAttackState : PlayerComboAttackStateBase
+public class PlayerAirComboAttackState : PlayerComboAttackStateBase, IAirborneState
 {
     public PlayerAirComboAttackState(PlayerStateMachine playerStateMachine) : base(playerStateMachine)
     {
