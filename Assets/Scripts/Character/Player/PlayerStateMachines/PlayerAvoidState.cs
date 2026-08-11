@@ -37,7 +37,7 @@ public class PlayerAvoidState : PlayerGroundState
 
     private IEnumerator WaitForAvoidEnd()
     {
-        yield return new WaitForSeconds(0.3f); // 회피 애니메이션 시간
+        yield return new WaitForSeconds(groundData.avoid2runTransitionTime); // 회피 애니메이션 시간
 
         if (stateMachine.CurrentState != this) yield break;   // 대기 중 다른 경로로 이미 전이됨 — 늦은 재개 방지
 
