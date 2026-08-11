@@ -63,6 +63,16 @@ CinemachineCameraBridge (기존 컴포넌트 확장)
 - **타겟 선택 각도 계산이 카메라 피치 영향받는 것**: 기존 합의(`Vector3.Angle` 3D 전체, `WorldToViewportPoint` 안 씀)대로 유지 — 알려진 단순화로 남겨두고, 실사용에서 문제되면 그때 보정.
 - **예외 처리**: 플레이어-타겟 XZ 거리 0에 가까우면 방향 계산 스킵(이전 값 유지). `OnDisable`/`OnDestroy`에서 Unlock() 강제 호출. `orbitInputAxis`는 무조건 true 복원이 아니라 락온 진입 전 enabled 상태 저장 후 복원.
 
+## 4-1. 실측 결과 (2026-08-11, MCP)
+
+- **BindingMode = `WorldSpace`**(`orbitalFollow.TrackerSettings.BindingMode`). 오빗 기준이 Follow 대상(플레이어)의 회전에 전혀 종속되지 않는 순수 월드 고정 방식 — "플레이어 회전 중에도 축값 매핑이 성립하는지" 우려가 애초에 발생하지 않는 구조로 확인됨(플레이어가 어떻게 회전하든 `HorizontalAxis` 각도-월드방향 매핑은 불변).
+- **OrbitStyle = `Sphere`**, `HorizontalAxis.Range = -180~180`, `Wrap = true`, `Radius = 2.83`.
+- 기준 상태(Horizontal=0, 플레이어 forward=+Z)에서 카메라 위치 오프셋이 정확히 `(0,0,-radius)`(플레이어 뒤 -Z)로 관측됨 → `Quaternion.Euler(Vertical, Horizontal, 0) * Vector3.back` 형태의 표준 월드축 구면좌표 공식으로 확인(Unity 좌우손 좌표계 Y축 회전 공식과 일치).
+- 위 공식을 대수적으로 풀면: **목표 Horizontal 각도 = `Mathf.Atan2(toTarget.x, toTarget.z) * Mathf.Rad2Deg`**(`toTarget` = 타겟-플레이어 XZ 방향 벡터) — 즉 "플레이어→타겟 방향의 월드 yaw"와 정확히 같음. `Quaternion.LookRotation` 공식과 동일해서 별도 좌표계 변환 불필요.
+- 플레이 모드에서 실시간(라이브 프레임) 검증은 시도했으나 **에디터가 포커스 없는 상태(`is_focused:false`)라 플레이모드 진입 후에도 프레임이 갱신되지 않아**(Unity가 백그라운드에서 틱을 안 돌림) 값 변경 후 즉시 재조회해도 트랜스폼이 그대로였음 — 분석적 유도로 대체, 실제 체감 확인은 마스터가 포커스 있는 세션에서 플레이해봐야 함(§5 8단계에서 안내).
+- `RotationComposer` 컴포넌트가 `CM_ThirdPersonCamera`에 실제로 부착돼 있고 `LookAt`(`Head_M`)을 Aim 단계에서 소비하는 표준 구성 확인(Body=OrbitalFollow, Aim=RotationComposer).
+- **참고:** 이 실측 중 `PlayerStateMachine.LockedTarget → Player.LockOn.CurrentTarget`에서 NRE 발생 확인(씬에 `PlayerLockOn` 아직 배선 전이라 `Player.LockOn`이 null) — §5 5단계(씬 배선) 완료 전까지는 정상. 코드 결함 아님.
+
 ## 5. 작업 순서 (승인 후)
 
 1차 시도에서 살아있는 부분(`PlayerLockOn`, `PlayerLockOnData`, `Lock` 입력 액션, `PlayerStateMachine.LockedTarget`, `PlayerBaseState.Rotate()` 분기)은 로직 그대로 재구현. 카메라 쪽만 새로 짠다.
