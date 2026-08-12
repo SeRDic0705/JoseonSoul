@@ -3,11 +3,7 @@ using Unity.Cinemachine;
 
 public class CinemachineCameraBridge : MonoBehaviour
 {
-    [field: SerializeField] public CameraSO Data { get; private set; }
-
     [SerializeField] private CinemachineOrbitalFollow orbitalFollow;
-    [SerializeField] private CinemachineRotationComposer rotationComposer;
-    [SerializeField] private CinemachineDeoccluder deoccluder;
 
     [Header("Lock-On")]
     [SerializeField] private CinemachineInputAxisController orbitInputAxis;    // 락온 중엔 배경에서 오빗 축이 안 흐르도록 정지
@@ -32,11 +28,6 @@ public class CinemachineCameraBridge : MonoBehaviour
         // 끝난 뒤 실행이 보장되는 Start()에서 배선(실행 순서 의존 없이 안전).
         if (vcam != null && player != null && player.CameraFollowTarget != null)
             vcam.Follow = player.CameraFollowTarget.FollowPoint;
-    }
-
-    private void OnEnable()
-    {
-        Configure();
     }
 
     private void Update()
@@ -79,37 +70,5 @@ public class CinemachineCameraBridge : MonoBehaviour
         orbitalFollow.HorizontalAxis.Value = Mathf.SmoothDampAngle(
             orbitalFollow.HorizontalAxis.Value, targetAngle, ref horizontalAxisVelocity, horizontalDampTime);
         // Vertical은 이번 범위에서 고정 유지(건드리지 않음)
-    }
-
-    public void Configure()
-    {
-        if (Data == null) return;
-
-        if (orbitalFollow != null)
-        {
-            orbitalFollow.Radius = Data.cameraOffset.magnitude;
-
-            var verticalAxis = orbitalFollow.VerticalAxis;
-            verticalAxis.Range = Data.pitchLimits;
-            verticalAxis.Center = (Data.pitchLimits.x + Data.pitchLimits.y) * 0.5f;
-            orbitalFollow.VerticalAxis = verticalAxis;
-        }
-
-        if (rotationComposer != null)
-        {
-            var composition = rotationComposer.Composition;
-            composition.DeadZone.Enabled = true;
-            composition.DeadZone.Size = new Vector2(Data.deadZoneRadius * 2f, Data.deadZoneRadius * 2f);
-            rotationComposer.Composition = composition;
-        }
-
-        if (deoccluder != null)
-        {
-            var avoid = deoccluder.AvoidObstacles;
-            avoid.CameraRadius = Data.cameraRadius;
-            deoccluder.AvoidObstacles = avoid;
-            deoccluder.CollideAgainst = Data.collisionMask;
-            deoccluder.MinimumDistanceFromTarget = Mathf.Max(Data.collisionOffset, 0.01f);
-        }
     }
 }

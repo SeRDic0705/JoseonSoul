@@ -207,7 +207,7 @@ Transform:
   m_GameObject: {fileID: 643898349}
   serializedVersion: 2
   m_LocalRotation: {x: 0.15212338, y: -0, z: -0, w: 0.98836154}
-  m_LocalPosition: {x: 0, y: 2.408936, z: -2.6904662}
+  m_LocalPosition: {x: -1.5606155e-16, y: 2.7607617, z: -3.806315}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -324,10 +324,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be0682ff4a22560449919f593f8e4754, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CinemachineCameraBridge
-  <Data>k__BackingField: {fileID: 11400000, guid: 0c7d35b65054d574db42eaa3ea219eee, type: 2}
   orbitalFollow: {fileID: 645527009}
-  rotationComposer: {fileID: 645527008}
-  deoccluder: {fileID: 645527007}
   orbitInputAxis: {fileID: 645527006}
   player: {fileID: 1748304746}
   horizontalDampTime: 0.15
@@ -408,7 +405,7 @@ MonoBehaviour:
   TransparentLayers:
     serializedVersion: 2
     m_Bits: 0
-  MinimumDistanceFromTarget: 0.3
+  MinimumDistanceFromTarget: 0.1
   AvoidObstacles:
     Enabled: 1
     DistanceLimit: 0
@@ -444,14 +441,14 @@ MonoBehaviour:
     ScreenPosition: {x: 0, y: 0}
     DeadZone:
       Enabled: 1
-      Size: {x: 0.02, y: 0.02}
+      Size: {x: 0.058, y: 0.058}
     HardLimits:
       Enabled: 0
       Size: {x: 0.8, y: 0.8}
       Offset: {x: 0, y: 0}
   CenterOnActivate: 1
   TargetOffset: {x: 0, y: 0, z: 0}
-  Damping: {x: 0.5, y: 0.5}
+  Damping: {x: 0.3, y: 0.5}
   Lookahead:
     Enabled: 0
     Time: 0
@@ -477,7 +474,7 @@ MonoBehaviour:
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
   OrbitStyle: 0
-  Radius: 2.83
+  Radius: 4
   Orbits:
     Top:
       Radius: 2
@@ -572,7 +569,7 @@ Transform:
   m_GameObject: {fileID: 645527004}
   serializedVersion: 2
   m_LocalRotation: {x: 0.15212338, y: 0, z: 0, w: 0.98836154}
-  m_LocalPosition: {x: -1.5606155e-16, y: 2.408936, z: -2.6904662}
+  m_LocalPosition: {x: -1.5606155e-16, y: 2.7607617, z: -3.806315}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -594,15 +591,19 @@ MonoBehaviour:
   rotationComposer: {fileID: 645527008}
   deoccluder: {fileID: 645527007}
   inputAxisController: {fileID: 645527006}
-  radius: 2.83
+  radius: 4
   rotationGainX: 1
   rotationGainY: -1
-  deadZoneSize: 0.02
-  rotationDamping: {x: 0.5, y: 0.5}
+  deadZoneSize: 0.058
+  rotationDamping: {x: 0.3, y: 0.5}
+  pitchLimits: {x: -100, y: 30}
   cameraRadius: 0.3
-  minimumDistanceFromTarget: 0.3
+  minimumDistanceFromTarget: 0.1
   obstacleDampingIn: 0.4
   obstacleDampingOut: 0.2
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!1001 &665458515
 PrefabInstance:
   m_ObjectHideFlags: 0
