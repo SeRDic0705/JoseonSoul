@@ -328,6 +328,8 @@ MonoBehaviour:
   orbitInputAxis: {fileID: 645527006}
   player: {fileID: 1748304746}
   horizontalDampTime: 0.01
+  lockedPositionDamping: {x: 0.2, y: 0.1, z: 0.1}
+  lockedRotationDamping: {x: 0.2, y: 0.1, z: 0.1}
 --- !u!114 &645527006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -441,14 +443,14 @@ MonoBehaviour:
     ScreenPosition: {x: 0, y: 0}
     DeadZone:
       Enabled: 1
-      Size: {x: 0.058, y: 0.058}
+      Size: {x: 0.011, y: 0.011}
     HardLimits:
       Enabled: 0
       Size: {x: 0.8, y: 0.8}
       Offset: {x: 0, y: 0}
   CenterOnActivate: 1
   TargetOffset: {x: 0, y: 0, z: 0}
-  Damping: {x: 0.3, y: 0.5}
+  Damping: {x: 1, y: 0.5}
   Lookahead:
     Enabled: 0
     Time: 0
@@ -594,8 +596,8 @@ MonoBehaviour:
   radius: 4
   rotationGainX: 1
   rotationGainY: -1
-  deadZoneSize: 0.058
-  rotationDamping: {x: 0.3, y: 0.5}
+  deadZoneSize: 0.011
+  rotationDamping: {x: 1, y: 0.5}
   pitchLimits: {x: -100, y: 30}
   cameraRadius: 0.3
   minimumDistanceFromTarget: 0.1

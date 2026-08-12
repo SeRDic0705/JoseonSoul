@@ -13,11 +13,17 @@ public class CinemachineCameraBridge : MonoBehaviour
     [SerializeField] private Player player;
     [Tooltip("락온 중 오빗 수평 각도가 목표각(타겟-플레이어-카메라 정렬)을 따라잡는 속도(SmoothDampAngle의 smoothTime, 초 단위). 값이 작을수록 빠르게 스냅, 클수록 천천히 부드럽게 돈다.")]
     [SerializeField] private float horizontalDampTime = 0.15f;
+    [Tooltip("락온 중 카메라가 '이상적인 위치'(오빗 각도 정렬 결과)를 따라잡는 위치 감쇠(TrackerSettings.PositionDamping 대체값). 0에 가까울수록 즉시 스냅, 클수록 천천히 부드럽게 따라간다.")]
+    [SerializeField] private Vector3 lockedPositionDamping = new Vector3(0.1f, 0.1f, 0.1f);
+    [Tooltip("락온 중 카메라 조준(Aim)이 따라잡는 회전 감쇠(TrackerSettings.RotationDamping 대체값). 0에 가까울수록 즉시 스냅, 클수록 천천히 부드럽게 따라간다.")]
+    [SerializeField] private Vector3 lockedRotationDamping = new Vector3(0.1f, 0.1f, 0.1f);
 
     private CinemachineCamera vcam;
     private bool wasLocked;
     private bool orbitInputAxisWasEnabled;    // 락온 진입 직전 enabled 상태(무조건 true로 복원하지 않기 위함)
     private float horizontalAxisVelocity;
+    private Vector3 savedPositionDamping;    // 락온 해제 시 복원할 원래 TrackerSettings 감쇠값
+    private Vector3 savedRotationDamping;
 
     private void Awake()
     {
@@ -50,10 +56,30 @@ public class CinemachineCameraBridge : MonoBehaviour
         {
             orbitInputAxisWasEnabled = orbitInputAxis != null && orbitInputAxis.enabled;
             if (orbitInputAxis != null) orbitInputAxis.enabled = false;
+
+            // TrackerSettings의 Position/RotationDamping이 우리가 맞춰둔 오빗 각도 위에 한 번 더 지연을
+            // 걸어서, 플레이어가 움직이는 동안엔 정렬이 계속 뒤처지는 원인이었다 — 락온 중엔 튜닝 가능한 값으로 대체.
+            var tracker = orbitalFollow.TrackerSettings;
+            savedPositionDamping = tracker.PositionDamping;
+            savedRotationDamping = tracker.RotationDamping;
         }
         else if (!locked && wasLocked)
         {
             if (orbitInputAxis != null) orbitInputAxis.enabled = orbitInputAxisWasEnabled;
+
+            var tracker = orbitalFollow.TrackerSettings;
+            tracker.PositionDamping = savedPositionDamping;
+            tracker.RotationDamping = savedRotationDamping;
+            orbitalFollow.TrackerSettings = tracker;
+        }
+
+        if (locked)
+        {
+            // 플레이 중 lockedPositionDamping/lockedRotationDamping을 바꿔도 즉시 반영되도록 매 프레임 동기화.
+            var tracker = orbitalFollow.TrackerSettings;
+            tracker.PositionDamping = lockedPositionDamping;
+            tracker.RotationDamping = lockedRotationDamping;
+            orbitalFollow.TrackerSettings = tracker;
         }
 
         wasLocked = locked;
