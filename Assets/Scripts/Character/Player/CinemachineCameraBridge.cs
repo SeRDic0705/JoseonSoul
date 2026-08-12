@@ -3,32 +3,39 @@ using Unity.Cinemachine;
 
 public class CinemachineCameraBridge : MonoBehaviour
 {
-    [field: SerializeField] public CameraSO Data { get; private set; }
-
+    [Tooltip("오빗 위치(Body) 계산에 쓰는 CinemachineOrbitalFollow. 락온 중 수평 각도를 이 컴포넌트의 HorizontalAxis에 직접 써서 정렬한다.")]
     [SerializeField] private CinemachineOrbitalFollow orbitalFollow;
-    [SerializeField] private CinemachineRotationComposer rotationComposer;
-    [SerializeField] private CinemachineDeoccluder deoccluder;
 
     [Header("Lock-On")]
-    [SerializeField] private CinemachineInputAxisController orbitInputAxis;    // 락온 중엔 배경에서 오빗 축이 안 흐르도록 정지
+    [Tooltip("자유 시점 입력(마우스/스틱). 락온 중엔 비활성화해서 배경에서 오빗 축이 안 흐르도록 막고, 해제 시 원래 상태로 복원한다.")]
+    [SerializeField] private CinemachineInputAxisController orbitInputAxis;
+    [Tooltip("락온 대상/카메라 Follow 지점 조회에 쓰는 플레이어 참조.")]
     [SerializeField] private Player player;
-    [SerializeField] private float horizontalDampTime = 0.15f;    // 오빗 수평 각도가 타겟 쪽으로 도는 속도(SmoothDampAngle)
+    [Tooltip("락온 중 오빗 수평 각도가 목표각(타겟-플레이어-카메라 정렬)을 따라잡는 속도(SmoothDampAngle의 smoothTime, 초 단위). 값이 작을수록 빠르게 스냅, 클수록 천천히 부드럽게 돈다.")]
+    [SerializeField] private float horizontalDampTime = 0.15f;
+    [Tooltip("락온 중 카메라가 '이상적인 위치'(오빗 각도 정렬 결과)를 따라잡는 위치 감쇠(TrackerSettings.PositionDamping 대체값). 0에 가까울수록 즉시 스냅, 클수록 천천히 부드럽게 따라간다.")]
+    [SerializeField] private Vector3 lockedPositionDamping = new Vector3(0.1f, 0.1f, 0.1f);
+    [Tooltip("락온 중 카메라 조준(Aim)이 따라잡는 회전 감쇠(TrackerSettings.RotationDamping 대체값). 0에 가까울수록 즉시 스냅, 클수록 천천히 부드럽게 따라간다.")]
+    [SerializeField] private Vector3 lockedRotationDamping = new Vector3(0.1f, 0.1f, 0.1f);
 
     private CinemachineCamera vcam;
-    private Transform defaultLookAt;    // 락온 해제 시 복귀할 원래 LookAt(Head_M)
     private bool wasLocked;
     private bool orbitInputAxisWasEnabled;    // 락온 진입 직전 enabled 상태(무조건 true로 복원하지 않기 위함)
     private float horizontalAxisVelocity;
+    private Vector3 savedPositionDamping;    // 락온 해제 시 복원할 원래 TrackerSettings 감쇠값
+    private Vector3 savedRotationDamping;
 
     private void Awake()
     {
         if (orbitalFollow != null) vcam = orbitalFollow.GetComponent<CinemachineCamera>();
-        if (vcam != null) defaultLookAt = vcam.LookAt;
     }
 
-    private void OnEnable()
+    private void Start()
     {
-        Configure();
+        // player.CameraFollowTarget.FollowPoint는 그쪽 Awake()에서 생성되므로, 모든 Awake()가
+        // 끝난 뒤 실행이 보장되는 Start()에서 배선(실행 순서 의존 없이 안전).
+        if (vcam != null && player != null && player.CameraFollowTarget != null)
+            vcam.Follow = player.CameraFollowTarget.FollowPoint;
     }
 
     private void Update()
@@ -37,7 +44,7 @@ public class CinemachineCameraBridge : MonoBehaviour
     }
 
     // 타겟-플레이어-카메라가 일직선이 되도록 오빗 수평 각도를 매 프레임 보간(Design/LockOn_Design.md §4-1).
-    // 신규 vcam 없이 기존 CM_ThirdPersonCamera 하나만 사용 — LookAt만 락온 중엔 LockPoint로 직접 전환.
+    // 신규 vcam 없이 기존 CM_ThirdPersonCamera 하나만 사용 — LookAt은 락온 여부와 무관하게 원래 대상(플레이어) 유지.
     private void UpdateLockOn()
     {
         if (player == null || player.LockOn == null || vcam == null || orbitalFollow == null) return;
@@ -49,12 +56,30 @@ public class CinemachineCameraBridge : MonoBehaviour
         {
             orbitInputAxisWasEnabled = orbitInputAxis != null && orbitInputAxis.enabled;
             if (orbitInputAxis != null) orbitInputAxis.enabled = false;
-            vcam.LookAt = player.LockOn.LockPoint;
+
+            // TrackerSettings의 Position/RotationDamping이 우리가 맞춰둔 오빗 각도 위에 한 번 더 지연을
+            // 걸어서, 플레이어가 움직이는 동안엔 정렬이 계속 뒤처지는 원인이었다 — 락온 중엔 튜닝 가능한 값으로 대체.
+            var tracker = orbitalFollow.TrackerSettings;
+            savedPositionDamping = tracker.PositionDamping;
+            savedRotationDamping = tracker.RotationDamping;
         }
         else if (!locked && wasLocked)
         {
             if (orbitInputAxis != null) orbitInputAxis.enabled = orbitInputAxisWasEnabled;
-            vcam.LookAt = defaultLookAt;
+
+            var tracker = orbitalFollow.TrackerSettings;
+            tracker.PositionDamping = savedPositionDamping;
+            tracker.RotationDamping = savedRotationDamping;
+            orbitalFollow.TrackerSettings = tracker;
+        }
+
+        if (locked)
+        {
+            // 플레이 중 lockedPositionDamping/lockedRotationDamping을 바꿔도 즉시 반영되도록 매 프레임 동기화.
+            var tracker = orbitalFollow.TrackerSettings;
+            tracker.PositionDamping = lockedPositionDamping;
+            tracker.RotationDamping = lockedRotationDamping;
+            orbitalFollow.TrackerSettings = tracker;
         }
 
         wasLocked = locked;
@@ -71,37 +96,5 @@ public class CinemachineCameraBridge : MonoBehaviour
         orbitalFollow.HorizontalAxis.Value = Mathf.SmoothDampAngle(
             orbitalFollow.HorizontalAxis.Value, targetAngle, ref horizontalAxisVelocity, horizontalDampTime);
         // Vertical은 이번 범위에서 고정 유지(건드리지 않음)
-    }
-
-    public void Configure()
-    {
-        if (Data == null) return;
-
-        if (orbitalFollow != null)
-        {
-            orbitalFollow.Radius = Data.cameraOffset.magnitude;
-
-            var verticalAxis = orbitalFollow.VerticalAxis;
-            verticalAxis.Range = Data.pitchLimits;
-            verticalAxis.Center = (Data.pitchLimits.x + Data.pitchLimits.y) * 0.5f;
-            orbitalFollow.VerticalAxis = verticalAxis;
-        }
-
-        if (rotationComposer != null)
-        {
-            var composition = rotationComposer.Composition;
-            composition.DeadZone.Enabled = true;
-            composition.DeadZone.Size = new Vector2(Data.deadZoneRadius * 2f, Data.deadZoneRadius * 2f);
-            rotationComposer.Composition = composition;
-        }
-
-        if (deoccluder != null)
-        {
-            var avoid = deoccluder.AvoidObstacles;
-            avoid.CameraRadius = Data.cameraRadius;
-            deoccluder.AvoidObstacles = avoid;
-            deoccluder.CollideAgainst = Data.collisionMask;
-            deoccluder.MinimumDistanceFromTarget = Mathf.Max(Data.collisionOffset, 0.01f);
-        }
     }
 }

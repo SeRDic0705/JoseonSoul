@@ -6,19 +6,17 @@ using Unity.Cinemachine;
 public static class SceneRebuildTool
 {
     private const string PlayerSOPath = "Assets/ScriptableObjects/Datas/PlayerSO.asset";
-    private const string CameraSOPath = "Assets/ScriptableObjects/Datas/CameraSO.asset";
     private const string CharacterPrefabPath = "Assets/Prefabs/Solider_Fist.prefab";
 
     [MenuItem("Tools/Joseon/Rebuild Player And Camera", false)]
     public static void RebuildPlayerAndCamera()
     {
         var playerSO = AssetDatabase.LoadAssetAtPath<PlayerSO>(PlayerSOPath);
-        var cameraSO = AssetDatabase.LoadAssetAtPath<CameraSO>(CameraSOPath);
         var characterPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CharacterPrefabPath);
 
-        if (playerSO == null || cameraSO == null || characterPrefab == null)
+        if (playerSO == null || characterPrefab == null)
         {
-            Debug.LogError("[SceneRebuildTool] 필요한 에셋을 찾을 수 없습니다. PlayerSO/CameraSO/Solider_Fist 경로를 확인하세요.");
+            Debug.LogError("[SceneRebuildTool] 필요한 에셋을 찾을 수 없습니다. PlayerSO/Solider_Fist 경로를 확인하세요.");
             return;
         }
 
@@ -102,10 +100,7 @@ public static class SceneRebuildTool
 
         var bridge = Undo.AddComponent<CinemachineCameraBridge>(cmGO);
         var bridgeEditor = new SerializedObject(bridge);
-        bridgeEditor.FindProperty("<Data>k__BackingField").objectReferenceValue = cameraSO;
         bridgeEditor.FindProperty("orbitalFollow").objectReferenceValue = orbital;
-        bridgeEditor.FindProperty("rotationComposer").objectReferenceValue = rotationComposer;
-        bridgeEditor.FindProperty("deoccluder").objectReferenceValue = deoccluder;
         bridgeEditor.ApplyModifiedProperties();
 
         var tuningPanel = Undo.AddComponent<CinemachineTuningPanel>(cmGO);
@@ -115,7 +110,8 @@ public static class SceneRebuildTool
         tuningEditor.FindProperty("deoccluder").objectReferenceValue = deoccluder;
         tuningEditor.FindProperty("inputAxisController").objectReferenceValue = cmGO.GetComponent<CinemachineInputAxisController>();
         tuningEditor.ApplyModifiedProperties();
-        tuningPanel.PullFromComponents();
+        // TuningPanel의 필드 기본값이 이제 유일한 설정 소스이므로, 방금 만든 컴포넌트에서 값을 끌어오는 대신 그 기본값을 그대로 밀어넣는다.
+        tuningPanel.Apply();
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         Selection.activeGameObject = playerGO;

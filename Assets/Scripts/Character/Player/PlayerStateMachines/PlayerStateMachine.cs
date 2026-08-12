@@ -30,6 +30,8 @@ public class PlayerStateMachine : StateMachine
 
     public Transform LockedTarget => Player.LockOn.CurrentTarget;
 
+    public bool IsGrounded => !(CurrentState is IAirborneState);
+
     public PlayerStateMachine(Player player)
     {
         this.Player = player;
