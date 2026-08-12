@@ -1195,6 +1195,7 @@ GameObject:
   - component: {fileID: 1748304744}
   - component: {fileID: 1748304749}
   - component: {fileID: 1748304750}
+  - component: {fileID: 1748304751}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1352,6 +1353,21 @@ MonoBehaviour:
   player: {fileID: 1748304746}
   head: {fileID: 2093251170074826550}
   landingSmoothTime: 0.15
+--- !u!114 &1748304751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1748304742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54717e36eed8a02469a3e54125718ace, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCameraProximityFade
+  fadeStartDistance: 0.8
+  fadeEndDistance: 0.4
+  fadeSmoothTime: 0.15
 --- !u!1 &1887416939
 GameObject:
   m_ObjectHideFlags: 0
