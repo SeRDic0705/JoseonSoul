@@ -122,16 +122,13 @@ public class PlayerBaseState : IState
         Move(moveDir);
     }
 
+    // Camera.main.transform(=MainCameraTransform)이 아니라 CameraBridge.GetPlanarMoveBasis()를 쓴다 —
+    // 벽 근처에서 CinemachineDeoccluder가 카메라 위치를 보정할 때 Camera.main.transform.forward가 함께 흔들려서
+    // 이동 방향이 진동하는 피드백 루프가 있었다(2026-08-12 Discord 진단). MainCameraTransform은 락온 시야각
+    // 판정(PlayerLockOn) 등 "화면에 실제로 보이는지"가 기준인 곳엔 계속 쓴다.
     private Vector3 GetMoveDir()
     {
-        Vector3 forward = stateMachine.MainCameraTransform.forward;
-        Vector3 right = stateMachine.MainCameraTransform.right;
-
-        forward.y = 0;
-        right.y = 0;
-
-        forward.Normalize();
-        right.Normalize();
+        (Vector3 forward, Vector3 right) = stateMachine.CameraBridge.GetPlanarMoveBasis();
 
         return forward * stateMachine.MoveInput.y + right * stateMachine.MoveInput.x;
     }
@@ -174,13 +171,15 @@ public class PlayerBaseState : IState
         Vector3 pullBack = -direction * skinWidth;
         float castDistance = inputDelta.magnitude + skinWidth;
 
+        bool blocked = false;
         if (Physics.CapsuleCast(top + pullBack, bottom + pullBack, radius, direction, out RaycastHit hit,
                 castDistance, groundData.WallLayerMask, QueryTriggerInteraction.Ignore))
         {
-            return Vector3.Dot(direction, -hit.normal) >= groundData.WallFrontalDotThreshold;
+            float dot = Vector3.Dot(direction, -hit.normal);
+            blocked = dot >= groundData.WallFrontalDotThreshold;
         }
 
-        return false;
+        return blocked;
     }
 
     protected void ForceMove()

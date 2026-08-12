@@ -97,4 +97,18 @@ public class CinemachineCameraBridge : MonoBehaviour
             orbitalFollow.HorizontalAxis.Value, targetAngle, ref horizontalAxisVelocity, horizontalDampTime);
         // Vertical은 이번 범위에서 고정 유지(건드리지 않음)
     }
+
+    // 플레이어 이동/회전용 평면 방향 basis. Camera.main.transform.forward는 CinemachineDeoccluder가 벽 회피로
+    // 카메라 위치를 보정할 때 함께 흔들려서(Design 문서 미작성, 2026-08-12 Discord 진단 참조 — 벽 근처에서
+    // 이동 방향이 최대 반바퀴 가까이 진동하는 피드백 루프의 원인이었음) 이동 방향 계산에 부적합하다.
+    // 대신 Deoccluder의 영향을 받지 않는 HorizontalAxis.Value(오빗 각도)에서 직접 유도한다.
+    // BindingMode=WorldSpace(§4-1 실측, UpdateLockOn()의 Atan2 공식과 정확히 역연산 관계) 전제 — 다른
+    // BindingMode로 바뀌면 이 공식도 함께 갱신해야 한다.
+    public (Vector3 forward, Vector3 right) GetPlanarMoveBasis()
+    {
+        if (orbitalFollow == null) return (Vector3.forward, Vector3.right);
+
+        Quaternion yawRot = Quaternion.Euler(0f, orbitalFollow.HorizontalAxis.Value, 0f);
+        return (yawRot * Vector3.forward, yawRot * Vector3.right);
+    }
 }

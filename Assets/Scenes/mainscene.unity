@@ -1273,6 +1273,7 @@ MonoBehaviour:
     dodgeAttackParameterName: DodgeAttack
     airAttackParameterName: '@AirAttack'
     airComboAttackParameterName: AirComboAttack
+  <CameraBridge>k__BackingField: {fileID: 645527005}
 --- !u!54 &1748304747
 Rigidbody:
   m_ObjectHideFlags: 0

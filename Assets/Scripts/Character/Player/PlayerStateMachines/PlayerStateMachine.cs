@@ -27,6 +27,7 @@ public class PlayerStateMachine : StateMachine
     public float AttackQueuedTime { get; set; }
 
     public Transform MainCameraTransform { get; set; }
+    public CinemachineCameraBridge CameraBridge { get; }
 
     public Transform LockedTarget => Player.LockOn.CurrentTarget;
 
@@ -47,6 +48,7 @@ public class PlayerStateMachine : StateMachine
         AirComboAttackState = new PlayerAirComboAttackState(this);
 
         MainCameraTransform = Camera.main.transform;
+        CameraBridge = player.CameraBridge;
 
         MoveSpeed = player.Data.GroundData.BaseSpeed;
         RotationDamping = player.Data.GroundData.BaseRotationDamping;
