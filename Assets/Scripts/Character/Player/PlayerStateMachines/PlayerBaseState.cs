@@ -139,11 +139,48 @@ public class PlayerBaseState : IState
     private void Move(Vector3 moveDir)
     {
         float moveSpeed = GetMoveSpeed();
-        stateMachine.Player.Controller.Move(
-        ((moveDir * moveSpeed)
-        + stateMachine.Player.ForceReceiver.Movement)
-        * Time.deltaTime
-        );
+        Vector3 inputDelta = moveDir * moveSpeed * Time.deltaTime;
+
+        if (IsBlockedByWall(inputDelta))
+        {
+            inputDelta = Vector3.zero;
+        }
+
+        // ForceReceiver(중력/넉백)는 벽 검사에 섞지 않고 항상 그대로 전달 — CharacterController 기본 충돌 처리를 그대로 받는다.
+        stateMachine.Player.Controller.Move(inputDelta + stateMachine.Player.ForceReceiver.Movement * Time.deltaTime);
+    }
+
+    // 입력 이동 델타 방향으로 벽을 미리 검사해, 거의 정면으로 부딪히는 경우 CharacterController의 기본 collide&slide
+    // 대신 이동 자체를 완전히 정지시킨다(정면 충돌에서도 미세한 접선 성분이 누적돼 옆으로 밀리는 문제 방지).
+    // 비스듬한 충돌은 여기서 손대지 않고 기존 슬라이드 그대로 둔다(벽 타는 느낌 유지).
+    private bool IsBlockedByWall(Vector3 inputDelta)
+    {
+        if (inputDelta.sqrMagnitude < 0.0001f) return false;
+
+        CharacterController controller = stateMachine.Player.Controller;
+        Transform t = controller.transform;
+
+        Vector3 direction = inputDelta.normalized;
+        float skinWidth = controller.skinWidth;
+
+        Vector3 scale = t.lossyScale;
+        float radius = controller.radius * Mathf.Max(scale.x, scale.z);
+        float halfHeight = Mathf.Max(controller.height * scale.y * 0.5f - radius, 0f);
+        Vector3 center = t.TransformPoint(controller.center);
+        Vector3 top = center + Vector3.up * halfHeight;
+        Vector3 bottom = center - Vector3.up * halfHeight;
+
+        // 캐스트 시작점을 살짝 뒤로 당겨서 이미 벽 스킨 두께 안에 박혀있어 캐스트가 충돌을 못 잡는 경우를 완화한다(완전한 보장은 아님).
+        Vector3 pullBack = -direction * skinWidth;
+        float castDistance = inputDelta.magnitude + skinWidth;
+
+        if (Physics.CapsuleCast(top + pullBack, bottom + pullBack, radius, direction, out RaycastHit hit,
+                castDistance, groundData.WallLayerMask, QueryTriggerInteraction.Ignore))
+        {
+            return Vector3.Dot(direction, -hit.normal) >= groundData.WallFrontalDotThreshold;
+        }
+
+        return false;
     }
 
     protected void ForceMove()
