@@ -327,7 +327,7 @@ MonoBehaviour:
   orbitalFollow: {fileID: 645527009}
   orbitInputAxis: {fileID: 645527006}
   player: {fileID: 1748304746}
-  horizontalDampTime: 0.15
+  horizontalDampTime: 0.01
 --- !u!114 &645527006
 MonoBehaviour:
   m_ObjectHideFlags: 0
