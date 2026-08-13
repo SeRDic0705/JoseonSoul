@@ -19,6 +19,10 @@ MonoBehaviour:
     <avoidSpeed>k__BackingField: 1.5
     <avoid2runTransitionTime>k__BackingField: 0.3
     <RunSpeed>k__BackingField: 2
+    <WallLayerMask>k__BackingField:
+      serializedVersion: 2
+      m_Bits: 64
+    <WallFrontalDotThreshold>k__BackingField: 0.95
   <AirData>k__BackingField:
     <JumpForce>k__BackingField: 5
   <AttackData>k__BackingField:
@@ -49,21 +53,29 @@ MonoBehaviour:
       <Force>k__BackingField: 1
       <Damage>k__BackingField: 0
     <AirAttackDatas>k__BackingField:
-    - <AttackName>k__BackingField: "공중1타_PLACEHOLDER"
+    - <AttackName>k__BackingField: "\uACF5\uC9111\uD0C0_PLACEHOLDER"
       <ComboStateIndex>k__BackingField: 1
       <ComboTransitionTime>k__BackingField: 0.5
       <ForceTransitionTime>k__BackingField: 0.3
       <Force>k__BackingField: 1
       <Damage>k__BackingField: 0
-    - <AttackName>k__BackingField: "공중2타_PLACEHOLDER"
+    - <AttackName>k__BackingField: "\uACF5\uC9112\uD0C0_PLACEHOLDER"
       <ComboStateIndex>k__BackingField: 2
       <ComboTransitionTime>k__BackingField: 0.5
       <ForceTransitionTime>k__BackingField: 0.3
       <Force>k__BackingField: 1
       <Damage>k__BackingField: 0
-    - <AttackName>k__BackingField: "공중3타_PLACEHOLDER"
+    - <AttackName>k__BackingField: "\uACF5\uC9113\uD0C0_PLACEHOLDER"
       <ComboStateIndex>k__BackingField: -1
       <ComboTransitionTime>k__BackingField: 0.5
       <ForceTransitionTime>k__BackingField: 0
       <Force>k__BackingField: 0
       <Damage>k__BackingField: 0
+  <LockOnData>k__BackingField:
+    <LockRange>k__BackingField: 15
+    <LockAngle>k__BackingField: 70
+    <LockableLayer>k__BackingField:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    <ReleaseRange>k__BackingField: 18
+    <LockPointHeightOffset>k__BackingField: 1
