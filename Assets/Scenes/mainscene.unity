@@ -332,7 +332,7 @@ MonoBehaviour:
   lockedRotationDamping: {x: 0.2, y: 0.1, z: 0.1}
   renderCamera: {fileID: 643898351}
   targetScreenY: 0.75
-  verticalCorrectionGain: 60
+  verticalCorrectionGain: 100
   maxVerticalAxisSpeed: 40
   verticalErrorDeadZone: 0.01
 --- !u!114 &645527006
