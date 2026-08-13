@@ -17,6 +17,20 @@ public class CinemachineCameraBridge : MonoBehaviour
     [SerializeField] private Vector3 lockedPositionDamping = new Vector3(0.1f, 0.1f, 0.1f);
     [Tooltip("락온 중 카메라 조준(Aim)이 따라잡는 회전 감쇠(TrackerSettings.RotationDamping 대체값). 0에 가까울수록 즉시 스냅, 클수록 천천히 부드럽게 따라간다.")]
     [SerializeField] private Vector3 lockedRotationDamping = new Vector3(0.1f, 0.1f, 0.1f);
+    [Tooltip("실제로 화면을 렌더링하는 카메라(WorldToViewportPoint 계산용). Camera.main을 매번 조회하지 않고 명시적으로 배선한다.")]
+    [SerializeField] private Camera renderCamera;
+
+    // 락온 타겟 UI 마커 등 다른 컴포넌트도 이 프로젝트의 실제 렌더 카메라를 동일하게 참조하도록 공개
+    // (Camera.main 태그 조회 대신 이 값을 재사용해 카메라 소스가 어긋나지 않게 함).
+    public Camera RenderCamera => renderCamera;
+    [Tooltip("락온 중 타겟이 위치할 목표 화면 세로 위치(뷰포트 기준 0=아래/1=위). 플레이어는 항상 RotationComposer가 화면 중앙(0.5)에 맞추므로, 이 값과 0.5의 차이가 목표 시차(gap)가 된다.")]
+    [SerializeField][Range(0f, 1f)] private float targetScreenY = 0.75f;
+    [Tooltip("타겟 화면 시차 오차를 얼마나 민감하게 VerticalAxis 속도로 변환할지(오차 1당 도/초). 값이 클수록 빨리 반응하지만 진동하기 쉽다.")]
+    [SerializeField] private float verticalCorrectionGain = 60f;
+    [Tooltip("VerticalAxis가 보정으로 움직일 수 있는 최대 속도(도/초). 과도한 오차에서도 튀지 않게 상한을 둔다.")]
+    [SerializeField] private float maxVerticalAxisSpeed = 40f;
+    [Tooltip("이 값보다 오차가 작으면 보정을 멈춘다(뷰포트 비율 기준) — 미세 진동/끝없는 미세 보정 방지.")]
+    [SerializeField] private float verticalErrorDeadZone = 0.01f;
 
     private CinemachineCamera vcam;
     private bool wasLocked;
@@ -95,7 +109,33 @@ public class CinemachineCameraBridge : MonoBehaviour
 
         orbitalFollow.HorizontalAxis.Value = Mathf.SmoothDampAngle(
             orbitalFollow.HorizontalAxis.Value, targetAngle, ref horizontalAxisVelocity, horizontalDampTime);
-        // Vertical은 이번 범위에서 고정 유지(건드리지 않음)
+
+        UpdateVerticalFraming();
+    }
+
+    // 타겟이 화면 세로 targetScreenY 지점에 오도록 오빗 높이(VerticalAxis)를 보정한다. 플레이어는
+    // RotationComposer가 위치 무관하게 항상 화면 중앙으로 재조준해주므로, 카메라 궤도 높이만 바뀌어도
+    // 플레이어는 계속 중앙에 남고 타겟만 시차(parallax)로 화면에서 위아래로 움직인다 — 그 시차를 오차
+    // 신호로 써서 원하는 화면 위치로 수렴시킨다. 절대 화면Y가 아니라 "플레이어 대비 상대 오차"를 쓰는
+    // 이유: RotationComposer 자체의 댐핑으로 플레이어가 잠깐 중앙에서 벗어나는 과도응답까지 이 축이
+    // 따라가며 두 제어기가 서로 간섭하는 걸 막기 위함(CodexBot 교차검증 반영).
+    private void UpdateVerticalFraming()
+    {
+        if (renderCamera == null || vcam.LookAt == null || player.LockOn.LockPoint == null) return;
+
+        Vector3 targetVp = renderCamera.WorldToViewportPoint(player.LockOn.LockPoint.position);
+        Vector3 playerVp = renderCamera.WorldToViewportPoint(vcam.LookAt.position);
+        if (targetVp.z <= 0f || playerVp.z <= 0f) return;    // 카메라 뒤쪽 — 이번 프레임 보정 스킵
+
+        float desiredGap = targetScreenY - 0.5f;    // 플레이어(화면 중앙 0.5) 대비 목표 시차
+        float actualGap = targetVp.y - playerVp.y;
+        float error = desiredGap - actualGap;
+
+        if (Mathf.Abs(error) <= verticalErrorDeadZone) return;
+
+        float speed = Mathf.Clamp(error * verticalCorrectionGain, -maxVerticalAxisSpeed, maxVerticalAxisSpeed);
+        float newValue = orbitalFollow.VerticalAxis.Value + speed * Time.deltaTime;
+        orbitalFollow.VerticalAxis.Value = Mathf.Clamp(newValue, orbitalFollow.VerticalAxis.Range.x, orbitalFollow.VerticalAxis.Range.y);
     }
 
     // 플레이어 이동/회전용 평면 방향 basis. Camera.main.transform.forward는 CinemachineDeoccluder가 벽 회피로

@@ -8,9 +8,10 @@ public class PlayerLockOn : MonoBehaviour
     [SerializeField] private Player player;    // Awake 순서 의존 없이 즉시 참조 가능하도록 인스펙터 자기참조
 
     public Transform CurrentTarget { get; private set; }
-    public Transform LockPoint { get; private set; }    // CurrentTarget.position + up*offset를 매 프레임 따라가는 프록시
+    public Transform LockPoint { get; private set; }    // 타겟의 실제 콜라이더 높이 비례 지점을 매 프레임 따라가는 프록시
 
     private Transform mainCameraTransform;
+    private Collider lockedBodyCollider;    // TryLock에서 실제로 탐지된 Collider를 그대로 캐싱(루트에 별도로 없어도 됨)
 
     private void Awake()
     {
@@ -40,7 +41,7 @@ public class PlayerLockOn : MonoBehaviour
             return;
         }
 
-        LockPoint.position = CurrentTarget.position + Vector3.up * data.LockPointHeightOffset;
+        RecalculateLockPoint();
 
         float distance = Vector3.Distance(transform.position, CurrentTarget.position);
         if (distance > data.ReleaseRange)
@@ -58,6 +59,7 @@ public class PlayerLockOn : MonoBehaviour
 
         HashSet<Transform> candidates = new HashSet<Transform>();
         Transform best = null;
+        Collider bestCollider = null;
         float bestAngle = float.MaxValue;
         float bestDistance = float.MaxValue;
 
@@ -77,6 +79,7 @@ public class PlayerLockOn : MonoBehaviour
             if (!better) continue;
 
             best = root;
+            bestCollider = hit;    // 이 루트를 실제로 탐지시킨 Collider — 조준점 높이 계산의 대표 Collider로 그대로 재사용
             bestAngle = angle;
             bestDistance = distance;
         }
@@ -84,8 +87,29 @@ public class PlayerLockOn : MonoBehaviour
         if (best == null) return;
 
         CurrentTarget = best;
+        lockedBodyCollider = bestCollider;
         LockPoint.gameObject.SetActive(true);
-        LockPoint.position = CurrentTarget.position + Vector3.up * data.LockPointHeightOffset;
+        RecalculateLockPoint();
+    }
+
+    // 조준점 Y를 대표 Collider의 실제 월드 바운즈(min~max) 비례 지점으로 계산한다(Design 미문서화,
+    // 2026-08-13 Discord 합의 — 적마다 키가 달라도 고정 오프셋 대신 실측 높이를 따라가게 하기 위함).
+    // 대표 Collider는 TryLock에서 실제로 탐지된 그 Collider를 그대로 쓰므로(루트에 별도로 Collider가
+    // 있어야 한다는 전제 없음) "Enemy 루트에는 몸통을 대표하는 Collider 하나만 붙인다"는 프로젝트
+    // 규약에 의존한다 — 다중 파츠(래그돌 등) 적이 추가되면 대표 Collider 선택 기준을 다시 설계할 것.
+    // Collider.bounds는 월드축 AABB라 대표 Collider가 기울면 높이가 왜곡되므로 직립 Capsule류 전제.
+    private void RecalculateLockPoint()
+    {
+        if (lockedBodyCollider == null || !lockedBodyCollider.enabled || !lockedBodyCollider.gameObject.activeInHierarchy)
+        {
+            LockPoint.position = CurrentTarget.position;    // 대표 Collider를 못 쓰면 Y 보정 없이 루트 위치로 폴백
+            return;
+        }
+
+        Bounds bounds = lockedBodyCollider.bounds;
+        float ratio = Mathf.Clamp01(player.Data.LockOnData.LockPointHeightRatio);
+        float y = bounds.min.y + bounds.size.y * ratio;
+        LockPoint.position = new Vector3(CurrentTarget.position.x, y, CurrentTarget.position.z);
     }
 
     private static Transform FindEnemyRoot(Transform from)
@@ -100,6 +124,7 @@ public class PlayerLockOn : MonoBehaviour
     private void Unlock()
     {
         CurrentTarget = null;
+        lockedBodyCollider = null;
         if (LockPoint != null) LockPoint.gameObject.SetActive(false);
     }
 }
