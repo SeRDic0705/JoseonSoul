@@ -19,6 +19,10 @@ public class CinemachineCameraBridge : MonoBehaviour
     [SerializeField] private Vector3 lockedRotationDamping = new Vector3(0.1f, 0.1f, 0.1f);
     [Tooltip("실제로 화면을 렌더링하는 카메라(WorldToViewportPoint 계산용). Camera.main을 매번 조회하지 않고 명시적으로 배선한다.")]
     [SerializeField] private Camera renderCamera;
+
+    // 락온 타겟 UI 마커 등 다른 컴포넌트도 이 프로젝트의 실제 렌더 카메라를 동일하게 참조하도록 공개
+    // (Camera.main 태그 조회 대신 이 값을 재사용해 카메라 소스가 어긋나지 않게 함).
+    public Camera RenderCamera => renderCamera;
     [Tooltip("락온 중 타겟이 위치할 목표 화면 세로 위치(뷰포트 기준 0=아래/1=위). 플레이어는 항상 RotationComposer가 화면 중앙(0.5)에 맞추므로, 이 값과 0.5의 차이가 목표 시차(gap)가 된다.")]
     [SerializeField][Range(0f, 1f)] private float targetScreenY = 0.75f;
     [Tooltip("타겟 화면 시차 오차를 얼마나 민감하게 VerticalAxis 속도로 변환할지(오차 1당 도/초). 값이 클수록 빨리 반응하지만 진동하기 쉽다.")]
