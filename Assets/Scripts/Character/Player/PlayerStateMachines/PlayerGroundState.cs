@@ -37,6 +37,7 @@ public class PlayerGroundState : PlayerBaseState
             notGroundedTimer += Time.deltaTime;
             if (notGroundedTimer >= notGroundedGracePeriod)
             {
+                stateMachine.AirborneFacesLockedTarget = FacesLockedTarget;    // 지상->공중 경계 스냅샷
                 stateMachine.ChangeState(stateMachine.FallState);
                 return;
             }
@@ -77,6 +78,7 @@ public class PlayerGroundState : PlayerBaseState
 
     protected override void OnJump()
     {
+        stateMachine.AirborneFacesLockedTarget = FacesLockedTarget;    // 지상->공중 경계 스냅샷
         stateMachine.ChangeState(stateMachine.JumpState);
     }
 

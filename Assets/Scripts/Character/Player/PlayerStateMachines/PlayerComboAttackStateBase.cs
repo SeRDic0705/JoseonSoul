@@ -125,6 +125,10 @@ public abstract class PlayerComboAttackStateBase : PlayerAttackState, IComboWind
                 {
                     stateMachine.AttackQueued = false;    // 패밀리 전환에 쓰인 입력이 새 1타의 콤보창에서 다시 소비되는 것 방지
                 }
+                if (destinationIsAir)
+                {
+                    stateMachine.AirborneFacesLockedTarget = FacesLockedTarget;    // 지상->공중 경계 스냅샷(공격으로 공중에 뜬 경우)
+                }
                 stateMachine.ChangeState(destinationIsAir ? stateMachine.AirComboAttackState : stateMachine.ComboAttackState);
             }
             else

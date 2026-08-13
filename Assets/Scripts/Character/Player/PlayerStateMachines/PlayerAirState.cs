@@ -3,6 +3,7 @@ using UnityEngine;
 public class PlayerAirState : PlayerBaseState, IAirborneState
 {
     protected override bool CanJump => false;    // 이중 점프 없음
+    protected override bool FacesLockedTarget => stateMachine.AirborneFacesLockedTarget;    // 지상->공중 경계에서 스냅샷된 값을 그대로 물려받음
 
     public PlayerAirState(PlayerStateMachine stateMachine) : base(stateMachine)
     {

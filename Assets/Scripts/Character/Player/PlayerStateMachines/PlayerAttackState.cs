@@ -53,6 +53,7 @@ public class PlayerAttackState : PlayerBaseState, IForceEventReceiver
         }
         else
         {
+            stateMachine.AirborneFacesLockedTarget = FacesLockedTarget;    // 지상->공중 경계 스냅샷
             stateMachine.ChangeState(stateMachine.FallState);
         }
     }

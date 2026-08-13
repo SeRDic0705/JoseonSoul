@@ -83,6 +83,7 @@ public class PlayerBaseState : IState
 
     protected virtual bool CanBeInterruptedByAttack => true;    // 이 상태가 공격 입력으로 즉시 전이될 수 있는지 (회피/공격류 등은 false로 오버라이드)
     protected virtual bool CanJump => true;    // 이 상태에서 점프 입력을 받는지 (회피/공격류/공중류 등은 false로 오버라이드)
+    protected virtual bool FacesLockedTarget => true;    // 락온 중 이 상태가 타겟 쪽을 계속 바라보는지 (Run은 이동 방향 기준 자유 회전을 위해 false로 오버라이드)
 
     protected virtual void OnAttackPerformed(InputAction.CallbackContext obj)
     {
@@ -211,9 +212,10 @@ public class PlayerBaseState : IState
     {
         Vector3 lookDir;
 
-        if (stateMachine.LockedTarget != null)
+        if (stateMachine.LockedTarget != null && FacesLockedTarget)
         {
-            // 락온 중엔 이동 여부와 무관하게 타겟 쪽을 계속 바라봄(스트레이프 이동)
+            // 락온 중엔 이동 여부와 무관하게 타겟 쪽을 계속 바라봄(스트레이프 이동) — FacesLockedTarget이
+            // false인 상태(Run)에서는 이 분기를 건너뛰고 아래 이동 방향 기준 자유 회전으로 폴백
             lookDir = stateMachine.LockedTarget.position - stateMachine.Player.transform.position;
             lookDir.y = 0f;
         }

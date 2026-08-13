@@ -31,6 +31,12 @@ public class PlayerStateMachine : StateMachine
 
     public Transform LockedTarget => Player.LockOn.CurrentTarget;
 
+    // 지상->공중 경계를 넘는 순간의 FacesLockedTarget 값을 스냅샷해 공중 상태(PlayerAirState/
+    // PlayerAirComboAttackState)가 그대로 물려받게 한다 — Run(false)에서 점프하면 공중에서도 계속
+    // 자유 회전, Idle/Walk/공격(true)에서 점프하면 공중에서도 계속 타겟 응시(2026-08-13 Discord 합의).
+    // 공중 내부 전이(Jump<->Fall, Air<->AirCombo)는 건드리지 않음 — 어차피 이 값을 그대로 읽으므로 유지됨.
+    public bool AirborneFacesLockedTarget { get; set; } = true;
+
     public bool IsGrounded => !(CurrentState is IAirborneState);
 
     public PlayerStateMachine(Player player)
