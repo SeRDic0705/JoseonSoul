@@ -78,4 +78,4 @@ MonoBehaviour:
       serializedVersion: 2
       m_Bits: 4294967295
     <ReleaseRange>k__BackingField: 18
-    <LockPointHeightOffset>k__BackingField: 1
+    <LockPointHeightRatio>k__BackingField: 0.667
