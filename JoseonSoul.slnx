@@ -1,4 +1,6 @@
 ﻿<Solution>
+  <Project Path="GaiaCore.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="GaiaEditor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
 </Solution>
