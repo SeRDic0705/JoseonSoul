@@ -16,6 +16,8 @@ public class Enemy : MonoBehaviour
         if (CurrentHealth <= 0) return;
 
         CurrentHealth -= damage;
+        Debug.Log($"[Enemy] {Data.DisplayName} 피격: -{damage} (남은 체력 {Mathf.Max(CurrentHealth, 0)}/{Data.MaxHealth})");
+
         if (CurrentHealth <= 0)
         {
             Die();
@@ -24,6 +26,7 @@ public class Enemy : MonoBehaviour
 
     private void Die()
     {
+        Debug.Log($"[Enemy] {Data.DisplayName} 사망");
         gameObject.SetActive(false);
     }
 }
