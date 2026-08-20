@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PlayerAttackState : PlayerBaseState, IForceEventReceiver
+public class PlayerAttackState : PlayerBaseState, IForceEventReceiver, IHitWindowEventReceiver
 {
     protected AttackInfo attackInfo;
     protected bool forceHandled;   // 전진력 이벤트/폴백 배타 실행 가드
@@ -32,6 +32,7 @@ public class PlayerAttackState : PlayerBaseState, IForceEventReceiver
         base.Exit();
 
         StopAnim(AttackFamilyParameterHash);
+        stateMachine.Player.Hitbox.Deactivate();
     }
 
     // 애니메이션 이벤트/폴백 폴링 양쪽에서 호출 — forceHandled 가드로 중복 실행 방지
@@ -44,10 +45,20 @@ public class PlayerAttackState : PlayerBaseState, IForceEventReceiver
         stateMachine.Player.ForceReceiver.AddForce(stateMachine.Player.transform.forward * attackInfo.Force);
     }
 
+    public void OnOpenHitWindow()
+    {
+        stateMachine.Player.Hitbox.Activate(attackInfo.Damage);
+    }
+
+    public void OnCloseHitWindow()
+    {
+        stateMachine.Player.Hitbox.Deactivate();
+    }
+
     // 콤보 미확정/닷지 종료 등, 공격류 상태가 끝날 때 목적지를 isGrounded로 분기(Design/AirState_Design.md §8-1/8-2)
     protected void ChangeToGroundedOrFall()
     {
-        if (stateMachine.Player.Controller.isGrounded)
+        if (stateMachine.IsGroundedStable)
         {
             ChangeToLocomotionState();
         }

@@ -6,6 +6,20 @@ public abstract class PlayerComboAttackStateBase : PlayerAttackState, IComboWind
 {
     private const float ComboBufferDuration = 0.2f;    // 창 열리기 직전 입력을 인정하는 버퍼 유효시간(PlayerAvoidState.AttackQueueDuration과 동일 폭)
 
+    // 애니메이터가 "Attack" 태그 상태에 최초 한 번도 도달 못 하면(컨트롤러 전이 우선순위 충돌 등으로 엉뚱한 곳에 갇힌 경우)
+    // 강제로 상태를 빠져나가는 워치독 — 원인 불문 "완전히 멈춤" 자체를 방지하는 안전장치(2026-08-20 더미 위 콤보 전환 교착 사례).
+    // 실제 공격 클립 재생 시간(3초 이상)과는 무관하게, "태그 상태에 도달하는 것 자체"만 감시한다 — 한 번이라도
+    // 도달하면 그 뒤로는 클립이 아무리 길게 재생되도 워치독이 끼어들지 않는다(최초 0.5초 고정값은 정상 공격까지
+    // 잘라버리는 오탐이었음, 2026-08-20 발견).
+    private const float AttackTagArrivalTimeout = 1f;
+    private float enterTime;
+    private bool reachedAttackTag;
+    // Enter() 직후 첫 프레임엔 애니메이터가 아직 새 파라미터를 반영하기 전이라, 방금 떠난 이전(지상↔공중 전환
+    // 전) Attack 태그 클립이 "정착된 상태"로 그대로 잡히는 경우가 있다(2026-08-20 발견 — 이 잔상 때문에
+    // reachedAttackTag가 실제로는 실패한 전이인데도 곧바로 true로 래치돼 워치독이 무력화됨). 그래서 "정착된
+    // Attack 태그"를 최소 한 번은 놓치는(=진짜로 전이 중인) 프레임을 먼저 관측해야만 그 뒤의 도달을 인정한다.
+    private bool sawUnsettledFrame;
+
     private bool alreadyApplyCombo;
 
     // 이벤트/폴백 배타 실행 가드 — 전부 Enter()에서만 초기화(Exit()에서 리셋 안 함: 크로스페이드 블렌드 중 늦게 도착하는
@@ -37,6 +51,10 @@ public abstract class PlayerComboAttackStateBase : PlayerAttackState, IComboWind
 
         attackInfo = GetAttackInfo(stateMachine.ComboIndex);
         stateMachine.Player.Animator.SetInteger("Combo", stateMachine.ComboIndex);
+
+        enterTime = Time.time;
+        reachedAttackTag = false;
+        sawUnsettledFrame = false;
     }
 
     public override void Exit()
@@ -48,6 +66,13 @@ public abstract class PlayerComboAttackStateBase : PlayerAttackState, IComboWind
         {
             stateMachine.ComboIndex = 0;
         }
+    }
+
+    // "정착된(전이 중 아님) Attack 태그 상태"인지 — Enter() 직후 한 프레임은 아직 이전 상태의 잔상일 수 있어
+    // sawUnsettledFrame으로 최소 한 번의 미정착 프레임을 거친 뒤에만 이 값을 신뢰한다.
+    private bool IsSettledOnTag(Animator animator, string tag)
+    {
+        return !animator.IsInTransition(0) && animator.GetCurrentAnimatorStateInfo(0).IsTag(tag);
     }
 
     private bool IsBufferFresh()
@@ -86,7 +111,32 @@ public abstract class PlayerComboAttackStateBase : PlayerAttackState, IComboWind
 
         ForceMove();
 
-        float normalizedTime = GetNormalizedTime(stateMachine.Player.Animator, "Attack");
+        var animator = stateMachine.Player.Animator;
+        bool settledOnAttack = IsSettledOnTag(animator, "Attack");
+        if (!settledOnAttack)
+        {
+            sawUnsettledFrame = true;    // 아직 정착 안 함(=진짜 전이 중) — 이후의 "정착됨" 판정을 신뢰해도 되는 조건 충족
+        }
+        else if (sawUnsettledFrame && !reachedAttackTag)
+        {
+            reachedAttackTag = true;
+        }
+
+        if (!reachedAttackTag && Time.time - enterTime >= AttackTagArrivalTimeout)
+        {
+            var info = animator.GetCurrentAnimatorStateInfo(0);
+            Debug.LogWarning($"[AttackWatchdog] {GetType().Name} 타임아웃 — 애니메이터가 Attack 태그 상태에 한 번도 도달하지 못해 강제 종료. " +
+                $"animCurTagHash={info.tagHash} animIsInTransition={animator.IsInTransition(0)} " +
+                $"@Attack={animator.GetBool(stateMachine.Player.AnimationData.AttackParameterHash)} " +
+                $"@AirAttack={animator.GetBool(stateMachine.Player.AnimationData.AirAttackParameterHash)} " +
+                $"isGrounded={stateMachine.Player.Controller.isGrounded} stableGrounded={stateMachine.IsGroundedStable}");
+
+            ChangeToGroundedOrFall();
+            return;
+        }
+
+        float normalizedTime = GetNormalizedTime(animator, "Attack");
+
         if (normalizedTime < 1f)
         {
             if (!forceHandled && normalizedTime >= attackInfo.ForceTransitionTime)
@@ -117,7 +167,7 @@ public abstract class PlayerComboAttackStateBase : PlayerAttackState, IComboWind
             {
                 // 착지/이륙으로 패밀리(지상↔공중)가 바뀌었으면 콤보를 리셋해 새 패밀리 1타부터,
                 // 같은 패밀리 안에서 이어지면 기존처럼 스윙 번호 유지(Design/AirState_Design.md §8-3 B안)
-                bool destinationIsAir = !stateMachine.Player.Controller.isGrounded;
+                bool destinationIsAir = !stateMachine.IsGroundedStable;
                 bool familyChanged = destinationIsAir != IsAirCombo;
 
                 stateMachine.ComboIndex = familyChanged ? 0 : attackInfo.ComboStateIndex;

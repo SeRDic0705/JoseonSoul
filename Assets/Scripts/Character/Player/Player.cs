@@ -19,6 +19,7 @@ public class Player : MonoBehaviour
     public ForceReceiver ForceReceiver { get; private set; }
     public PlayerLockOn LockOn { get; private set; }
     public PlayerCameraFollowTarget CameraFollowTarget { get; private set; }
+    public PlayerHitbox Hitbox { get; private set; }
 
     private PlayerStateMachine stateMachine;
     public PlayerStateMachine StateMachine => stateMachine;
@@ -35,6 +36,7 @@ public class Player : MonoBehaviour
         ForceReceiver = GetComponent<ForceReceiver>();
         LockOn = GetComponent<PlayerLockOn>();
         CameraFollowTarget = GetComponent<PlayerCameraFollowTarget>();
+        Hitbox = GetComponentInChildren<PlayerHitbox>();
 
         stateMachine = new PlayerStateMachine(this);
         

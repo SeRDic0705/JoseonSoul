@@ -32,45 +32,45 @@ MonoBehaviour:
       <ComboTransitionTime>k__BackingField: 0.5
       <ForceTransitionTime>k__BackingField: 0.3
       <Force>k__BackingField: 1
-      <Damage>k__BackingField: 0
+      <Damage>k__BackingField: 8
     - <AttackName>k__BackingField: "2\uD0C0"
       <ComboStateIndex>k__BackingField: 2
       <ComboTransitionTime>k__BackingField: 0.5
       <ForceTransitionTime>k__BackingField: 0.3
       <Force>k__BackingField: 1
-      <Damage>k__BackingField: 0
+      <Damage>k__BackingField: 8
     - <AttackName>k__BackingField: "3\uD0C0"
       <ComboStateIndex>k__BackingField: -1
       <ComboTransitionTime>k__BackingField: 0.5
       <ForceTransitionTime>k__BackingField: 0
       <Force>k__BackingField: 0
-      <Damage>k__BackingField: 0
+      <Damage>k__BackingField: 12
     <DodgeAttackInfo>k__BackingField:
       <AttackName>k__BackingField: DodgeAttack_PLACEHOLDER
       <ComboStateIndex>k__BackingField: 1
       <ComboTransitionTime>k__BackingField: 0.5
       <ForceTransitionTime>k__BackingField: 0.3
       <Force>k__BackingField: 1
-      <Damage>k__BackingField: 0
+      <Damage>k__BackingField: 8
     <AirAttackDatas>k__BackingField:
     - <AttackName>k__BackingField: "\uACF5\uC9111\uD0C0_PLACEHOLDER"
       <ComboStateIndex>k__BackingField: 1
       <ComboTransitionTime>k__BackingField: 0.5
       <ForceTransitionTime>k__BackingField: 0.3
       <Force>k__BackingField: 1
-      <Damage>k__BackingField: 0
+      <Damage>k__BackingField: 8
     - <AttackName>k__BackingField: "\uACF5\uC9112\uD0C0_PLACEHOLDER"
       <ComboStateIndex>k__BackingField: 2
       <ComboTransitionTime>k__BackingField: 0.5
       <ForceTransitionTime>k__BackingField: 0.3
       <Force>k__BackingField: 1
-      <Damage>k__BackingField: 0
+      <Damage>k__BackingField: 8
     - <AttackName>k__BackingField: "\uACF5\uC9113\uD0C0_PLACEHOLDER"
       <ComboStateIndex>k__BackingField: -1
       <ComboTransitionTime>k__BackingField: 0.5
       <ForceTransitionTime>k__BackingField: 0
       <Force>k__BackingField: 0
-      <Damage>k__BackingField: 0
+      <Damage>k__BackingField: 12
   <LockOnData>k__BackingField:
     <LockRange>k__BackingField: 15
     <LockAngle>k__BackingField: 70
