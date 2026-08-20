@@ -58,7 +58,7 @@ public class PlayerAttackState : PlayerBaseState, IForceEventReceiver, IHitWindo
     // 콤보 미확정/닷지 종료 등, 공격류 상태가 끝날 때 목적지를 isGrounded로 분기(Design/AirState_Design.md §8-1/8-2)
     protected void ChangeToGroundedOrFall()
     {
-        if (stateMachine.Player.Controller.isGrounded)
+        if (stateMachine.IsGroundedStable)
         {
             ChangeToLocomotionState();
         }

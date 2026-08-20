@@ -34,6 +34,8 @@ public class PlayerBaseState : IState
 
     public virtual void Update()
     {
+        stateMachine.UpdateGroundedStability();
+
         Move();
 
         if (stateMachine.IsAttacking && CanBeInterruptedByAttack)

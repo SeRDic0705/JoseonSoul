@@ -139,6 +139,9 @@ AnimatorTransition:
   - m_ConditionMode: 2
     m_ConditionEvent: '@Attack'
     m_EventTreshold: 0
+  - m_ConditionMode: 2
+    m_ConditionEvent: '@AirAttack'
+    m_EventTreshold: 0
   m_DstStateMachine: {fileID: -6259030347426668217}
   m_DstState: {fileID: 0}
   m_Solo: 0
@@ -897,15 +900,6 @@ AnimatorStateMachine:
   m_EntryTransitions:
   - {fileID: -4367755837887188477}
   m_StateMachineTransitions:
-  - first: {fileID: 4846610606937295836}
-    second:
-    - {fileID: 7856385164672368764}
-    - {fileID: 3849362236341939687}
-    - {fileID: 7580256446145312315}
-  - first: {fileID: -9012071135827340559}
-    second:
-    - {fileID: 1556450353597209525}
-    - {fileID: -5837676322849719838}
   - first: {fileID: -6259030347426668217}
     second:
     - {fileID: -6247768804302507316}
@@ -914,6 +908,15 @@ AnimatorStateMachine:
     second:
     - {fileID: -6996770471538653093}
     - {fileID: 1779100773320371458}
+  - first: {fileID: -9012071135827340559}
+    second:
+    - {fileID: 1556450353597209525}
+    - {fileID: -5837676322849719838}
+  - first: {fileID: 4846610606937295836}
+    second:
+    - {fileID: 7856385164672368764}
+    - {fileID: 3849362236341939687}
+    - {fileID: 7580256446145312315}
   m_StateMachineBehaviours: []
   m_AnyStatePosition: {x: 50, y: 20, z: 0}
   m_EntryPosition: {x: 50, y: 120, z: 0}
@@ -1071,6 +1074,9 @@ AnimatorTransition:
     m_EventTreshold: 0
   - m_ConditionMode: 2
     m_ConditionEvent: Fall
+    m_EventTreshold: 0
+  - m_ConditionMode: 2
+    m_ConditionEvent: '@Attack'
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: -6259030347426668217}
   m_DstState: {fileID: 0}

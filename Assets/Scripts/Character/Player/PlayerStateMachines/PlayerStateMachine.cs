@@ -39,6 +39,31 @@ public class PlayerStateMachine : StateMachine
 
     public bool IsGrounded => !(CurrentState is IAirborneState);
 
+    // Controller.isGrounded 원시값 대신 쓰는 디바운스된 접지 판정 — 콤보 목적지(지상/공중) 판단처럼
+    // 단발성 오판이 애니메이터 상태 불일치로 이어지는 곳에 사용한다(더미처럼 둥근 콜라이더 위에 서면
+    // isGrounded가 프레임 단위로 깜빡여서, 이 값을 그대로 쓰면 콤보 전환 중 엉뚱한 패밀리로 전이해버림 —
+    // 2026-08-20 발견). PlayerGroundState의 notGroundedGracePeriod와 같은 디바운스 폭을 공유 지점에 재사용.
+    private const float NotGroundedDebounce = 0.15f;
+    private float notGroundedTimer;
+    public bool IsGroundedStable { get; private set; } = true;
+
+    public void UpdateGroundedStability()
+    {
+        if (Player.Controller.isGrounded)
+        {
+            notGroundedTimer = 0f;
+            IsGroundedStable = true;
+        }
+        else
+        {
+            notGroundedTimer += Time.deltaTime;
+            if (notGroundedTimer >= NotGroundedDebounce)
+            {
+                IsGroundedStable = false;
+            }
+        }
+    }
+
     public PlayerStateMachine(Player player)
     {
         this.Player = player;

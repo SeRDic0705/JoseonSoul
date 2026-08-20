@@ -86,6 +86,9 @@ public class PlayerGroundState : PlayerBaseState
     {
         yield return new WaitForSeconds(moveInputGracePeriod);
 
+        // 대기하는 동안 다른 상태로 이미 전이됐으면(점프/공격 등) 강제로 Idle을 덮어쓰지 않는다.
+        if (stateMachine.CurrentState != this) yield break;
+
         if (stateMachine.MoveInput == Vector2.zero)
         {
             stateMachine.ChangeState(stateMachine.IdleState);
