@@ -129,7 +129,7 @@ public class PlayerBaseState : IState
     // 벽 근처에서 CinemachineDeoccluder가 카메라 위치를 보정할 때 Camera.main.transform.forward가 함께 흔들려서
     // 이동 방향이 진동하는 피드백 루프가 있었다(2026-08-12 Discord 진단). MainCameraTransform은 락온 시야각
     // 판정(PlayerLockOn) 등 "화면에 실제로 보이는지"가 기준인 곳엔 계속 쓴다.
-    private Vector3 GetMoveDir()
+    protected Vector3 GetMoveDir()
     {
         (Vector3 forward, Vector3 right) = stateMachine.CameraBridge.GetPlanarMoveBasis();
 

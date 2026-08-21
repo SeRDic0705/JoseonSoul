@@ -47,7 +47,24 @@ public class PlayerGroundState : PlayerBaseState
             notGroundedTimer = 0f;
         }
 
+        UpdateLockedOnAnim();
+
         base.Update();
+    }
+
+    // 락온 이동 애니메이션(WalkLockedOn 블렌드트리)용 파라미터 갱신 — Idle에서도 최신값이어야
+    // Idle→WalkLockedOn 직결 트랜지션 조건이 정확히 평가된다(PlayerWalkState 안에만 두면 stale해짐).
+    private void UpdateLockedOnAnim()
+    {
+        var animator = stateMachine.Player.Animator;
+        var animData = stateMachine.Player.AnimationData;
+
+        bool isLockedOn = stateMachine.LockedTarget != null;
+        animator.SetBool(animData.LockedOnParameterHash, isLockedOn);
+
+        Vector3 localMoveDir = stateMachine.Player.transform.InverseTransformDirection(GetMoveDir());
+        animator.SetFloat(animData.MoveXParameterHash, localMoveDir.x);
+        animator.SetFloat(animData.MoveZParameterHash, localMoveDir.z);
     }
 
     public override void PhysicsUpdate()
