@@ -830,7 +830,7 @@ PlayerSettings:
   webWasm2023: 0
   webEnableSubmoduleStrippingCompatibility: 0
   scriptingDefineSymbols:
-    Standalone: GAIA_V3_CINEMACHINE_OR_NEWER;GAIA_2023;GAIA_MESH_PRESENT;GAIA_INPUT_SYSTEM
+    Standalone: GAIA_V3_CINEMACHINE_OR_NEWER;GAIA_2023;GAIA_MESH_PRESENT;GAIA_INPUT_SYSTEM;UPPipeline
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
