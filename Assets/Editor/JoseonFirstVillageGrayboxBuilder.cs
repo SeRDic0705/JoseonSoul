@@ -508,6 +508,7 @@ public static class JoseonFirstVillageGrayboxBuilder
 
         AddGaiaTrees(terrain, natureRoot.transform);
         AddGaiaGrass(terrain);
+        AddGaiaUnderstoryClusters(terrain, natureRoot.transform);
         AddGaiaRocks(terrain, natureRoot.transform);
 
         terrain.treeDistance = 650f;
@@ -546,7 +547,8 @@ public static class JoseonFirstVillageGrayboxBuilder
             float routeHeight;
             float routeDistance = DistanceToRoute(point, out routeHeight);
             float routeClearance = worldZ >= 5f ? 7.2f : 13f;
-            if (routeDistance < routeClearance || GetPadWeight(point, 8f) > 0.04f) continue;
+            float padWeight = worldZ >= 5f ? GetPadWeight(point, 2f) : GetPadWeight(point, 8f);
+            if (routeDistance < routeClearance || padWeight > (worldZ >= 5f ? 0.32f : 0.04f)) continue;
             if (Vector2.Distance(point, new Vector2(95f, 187f)) < 45f) continue;
 
             float nx = Mathf.InverseLerp(-TerrainSize * 0.5f, TerrainSize * 0.5f, worldX);
@@ -665,6 +667,51 @@ public static class JoseonFirstVillageGrayboxBuilder
         data.SetDetailLayer(0, 0, 1, lowDensity);
     }
 
+    private static void AddGaiaUnderstoryClusters(Terrain terrain, Transform parent)
+    {
+        GameObject wildGrass = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Procedural Worlds/Packages - Install/Asset Samples/Procedural Worlds/Content Resources/Terrain Details/PW_WildGrass_General_Lod1 Sample.fbx");
+        GameObject cloverGrass = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Procedural Worlds/Packages - Install/Asset Samples/Procedural Worlds/Content Resources/Terrain Details/PW_LawnGrass_CloverFlower Sample.fbx");
+        if (wildGrass == null && cloverGrass == null) return;
+
+        GameObject clusterRoot = new GameObject("Gaia Understory Clusters - Zone 3+");
+        clusterRoot.transform.SetParent(parent);
+        TerrainData data = terrain.terrainData;
+        System.Random random = new System.Random(1594);
+        int count = 0;
+        for (int attempt = 0; attempt < 3200 && count < 360; attempt++)
+        {
+            float worldZ = Mathf.Lerp(3f, 235f, (float)random.NextDouble());
+            float worldX = Mathf.Lerp(-115f, 145f, (float)random.NextDouble());
+            Vector2 point = new Vector2(worldX, worldZ);
+            float routeHeight;
+            float routeDistance = DistanceToRoute(point, out routeHeight);
+            if (routeDistance < 4.8f || routeDistance > 31f) continue;
+            if (GetPadWeight(point, 0.5f) > 0.58f) continue;
+            if (Vector2.Distance(point, new Vector2(95f, 187f)) < 40f) continue;
+
+            float nx = Mathf.InverseLerp(-TerrainSize * 0.5f, TerrainSize * 0.5f, worldX);
+            float nz = Mathf.InverseLerp(-TerrainSize * 0.5f, TerrainSize * 0.5f, worldZ);
+            if (data.GetSteepness(nx, nz) > 31f) continue;
+            float clusterNoise = Mathf.PerlinNoise(worldX * 0.075f + 4.7f, worldZ * 0.075f + 12.9f);
+            if (clusterNoise < 0.43f) continue;
+
+            GameObject source = ((float)random.NextDouble() < 0.72f || cloverGrass == null) ? wildGrass : cloverGrass;
+            if (source == null) source = cloverGrass;
+            GameObject cluster = PrefabUtility.InstantiatePrefab(source) as GameObject;
+            if (cluster == null) continue;
+            cluster.name = "Understory " + count.ToString("000");
+            cluster.transform.SetParent(clusterRoot.transform);
+            float groundY = terrain.SampleHeight(new Vector3(worldX, 0f, worldZ)) + terrain.transform.position.y;
+            cluster.transform.position = new Vector3(worldX, groundY, worldZ);
+            cluster.transform.rotation = Quaternion.Euler(0f, (float)random.NextDouble() * 360f, 0f);
+            float scale = Mathf.Lerp(0.75f, 1.55f, (float)random.NextDouble());
+            cluster.transform.localScale = new Vector3(scale, Mathf.Lerp(0.8f, 1.35f, (float)random.NextDouble()), scale);
+            foreach (Collider collider in cluster.GetComponentsInChildren<Collider>()) collider.enabled = false;
+            count++;
+        }
+        new GameObject("Understory Instance Count - " + count).transform.SetParent(clusterRoot.transform);
+    }
+
     private static void AddGaiaRocks(Terrain terrain, Transform parent)
     {
         GameObject rockPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Procedural Worlds/Packages - Install/Asset Samples/Procedural Worlds/Prefabs/PW_Stone_01.prefab");
@@ -779,8 +826,8 @@ public static class JoseonFirstVillageGrayboxBuilder
         GameObject cameraObject = new GameObject("Forest Walk Camera - Zone 3 (Main)");
         Camera camera = cameraObject.AddComponent<Camera>();
         cameraObject.tag = "MainCamera";
-        cameraObject.transform.position = new Vector3(-2f, 25.9f, 76f);
-        cameraObject.transform.rotation = Quaternion.LookRotation(new Vector3(11f, 29.1f, 122f) - cameraObject.transform.position);
+        cameraObject.transform.position = new Vector3(-4f, 25.2f, 71f);
+        cameraObject.transform.rotation = Quaternion.LookRotation(new Vector3(7f, 27.5f, 101f) - cameraObject.transform.position);
         camera.fieldOfView = 58f;
         camera.farClipPlane = 900f;
         camera.clearFlags = CameraClearFlags.Skybox;
