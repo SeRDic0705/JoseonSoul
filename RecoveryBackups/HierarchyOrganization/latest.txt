@@ -1,0 +1,15 @@
+Completed=2026-08-25 14:31:42 +09:00
+00_REGION - Start Village=3
+01_REGION - Practice Basic Attack=58
+02_REGION - Practice Heavy Attack=167
+03_REGION - Practice Dodge=15
+04_REGION - Temple Approach=45
+05_REGION - Temple Courtyard=9
+06_REGION - Boss Arena=3
+80_LEVEL - Route Guides & Markers=2
+90_ENVIRONMENT - Terrain & Nature=14
+99_MISC - Unsorted Level Objects=0
+PreservedRootObjects:
+Gaia Runtime
+Main Camera
+PlayerControll
