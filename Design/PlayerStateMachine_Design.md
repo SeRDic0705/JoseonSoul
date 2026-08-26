@@ -18,17 +18,24 @@ StateMachine (abstract)
   └─ CurrentState (get) — 2026-08-06 추가, 동프레임 이중전이 가드용
 
 PlayerStateMachine : StateMachine
-  └─ Player 참조 + 상태 인스턴스(Idle/Walk/Run/Avoid/ComboAttack/DodgeAttack) + 공유 런타임 값 보유
+  └─ Player 참조 + 상태 인스턴스(Idle/Walk/Run/Avoid/ComboAttack/DodgeAttack/Jump/Fall/AirComboAttack) + 공유 런타임 값 보유
 
 PlayerBaseState : IState
-  └─ 입력 콜백 등록/해제, 이동·회전, 애니메이션 Bool 헬퍼 공용 로직, CanBeInterruptedByAttack(virtual)
+  └─ 입력 콜백 등록/해제, 이동·회전, 애니메이션 Bool 헬퍼 공용 로직,
+     CanBeInterruptedByAttack/CanJump(virtual), 공격·점프 우선순위 체크(Update()),
+     ChangeToLocomotionState() 공용 헬퍼(2026-08-11, [[project_unity_joseonsoul]] 공중 상태 작업분)
   ├─ PlayerGroundState : PlayerBaseState
   │    ├─ PlayerIdleState
   │    ├─ PlayerWalkState
   │    ├─ PlayerRunState
-  │    └─ PlayerAvoidState (CanBeInterruptedByAttack = false)
-  └─ PlayerAttackState : PlayerBaseState, IForceEventReceiver
-       ├─ PlayerComboAttackState : IComboWindowEventReceiver 추가 구현
+  │    └─ PlayerAvoidState (CanBeInterruptedByAttack = false, CanJump = false)
+  ├─ PlayerAirState : PlayerBaseState (2026-08-11 신규, CanJump = false)
+  │    ├─ PlayerJumpState
+  │    └─ PlayerFallState
+  └─ PlayerAttackState : PlayerBaseState, IForceEventReceiver (CanBeInterruptedByAttack = false, CanJump = false)
+       ├─ PlayerComboAttackStateBase : IComboWindowEventReceiver 추가 구현 (2026-08-11 추출 — 콤보창/버퍼/이벤트 공용)
+       │    ├─ PlayerComboAttackState (지상)
+       │    └─ PlayerAirComboAttackState (2026-08-11 신규 — 공중, Enter/Exit에서 ForceReceiver.SuspendGravity/ResumeGravity)
        └─ PlayerDodgeAttackState (2026-08-06 신규, IForceEventReceiver만 — 콤보 창 개념 없음)
 
 IForceEventReceiver / IComboWindowEventReceiver (interface, attack-events 브랜치 신규)
@@ -49,8 +56,9 @@ IForceEventReceiver / IComboWindowEventReceiver (interface, attack-events 브랜
 | `IsAttacking` | Attack 입력 performed~canceled 사이 true (누르고 있는 동안 유지 — 콤보 체인 판단용, 버퍼 아님) |
 | `ComboIndex` | 다음 진입할 콤보 단계 인덱스 (`PlayerAttackData.AttackDatas` 인덱스) |
 | `AttackQueued` / `AttackQueuedTime` | 2026-08-06 추가. 공격 입력이 눌린 순간 원샷으로 큐잉되는 진짜 버퍼(유효시간 0.2초). `CanBeInterruptedByAttack=false`인 상태(Avoid)에서 눌린 공격을 상태 종료 시점에 소비하기 위함 — `IsAttacking`과 역할이 다름. `PlayerComboAttackState`의 콤보 창 래치에도 재사용(§4-2) — **읽어서 래치 판단에 쓰는 즉시 그 자리에서 소비(`false`로)하는 규칙을 모든 사용처에서 통일** |
-| `JumpForce` | 선언은 있으나 현재 어떤 State도 사용하지 않음(공중 상태 미구현) |
 | `MainCameraTransform` | 이동 방향 계산 기준(카메라 forward/right 평면 투영) |
+
+> 2026-08-11: 죽은 필드였던 `JumpForce`(PlayerStateMachine)는 제거 — 실제 점프력은 `Player.Data.AirData.JumpForce`(SO)를 `PlayerJumpState.Enter()`가 직접 읽는다.
 
 ## 3. 상태 전이 그래프 (현재 구현분)
 
@@ -97,11 +105,15 @@ public override void Update()
 }
 ```
 
-현재 `PlayerIdleState`, `PlayerRunState`에 적용돼 있다. 새 상태를 추가할 때 `Update()`에서 `base.Update()` 이후 추가 로직이 있다면 이 가드를 함께 넣을 것.
+현재 `PlayerIdleState`, `PlayerRunState`, `PlayerAirState`, `PlayerJumpState`(2026-08-11 추가)에 적용돼 있다. 새 상태를 추가할 때 `Update()`에서 `base.Update()` 이후 추가 로직이 있다면 이 가드를 함께 넣을 것.
 
 ### 3-2. 공격 인터럽트 허용 여부 선언 (컨벤션, 2026-08-06)
 
-상태별로 공격 입력이 즉시 전이를 일으켜도 되는지를 `protected virtual bool CanBeInterruptedByAttack => true;`(`PlayerBaseState`, 기본값 true)로 선언한다. `PlayerGroundState.Update()`는 `if (IsAttacking && CanBeInterruptedByAttack) OnAttack();`로 이 값을 확인한다. 회피처럼 인터럽트되면 안 되는 상태는 `false`로 오버라이드하고, 대신 `AttackQueued` 버퍼로 입력을 보존했다가 상태 종료 시점에 소비한다(예: `PlayerAvoidState.WaitForAvoidEnd()`). 향후 피격/처형 등 인터럽트 불가 상태를 추가할 때도 이 프로퍼티만 선언하면 된다.
+상태별로 공격 입력이 즉시 전이를 일으켜도 되는지를 `protected virtual bool CanBeInterruptedByAttack => true;`(`PlayerBaseState`, 기본값 true)로 선언한다. 2026-08-11부터 이 체크(`if (IsAttacking && CanBeInterruptedByAttack) { OnAttack(); return; }`)는 `PlayerBaseState.Update()`로 공용화됐다(지상/공중 모두 동일 진입점). 회피처럼 인터럽트되면 안 되는 상태는 `false`로 오버라이드하고, 대신 `AttackQueued` 버퍼로 입력을 보존했다가 상태 종료 시점에 소비한다(예: `PlayerAvoidState.WaitForAvoidEnd()`). `PlayerAttackState`(공격류 공통 베이스) 자신도 `false`로 오버라이드한다 — 공유 체크가 공격 상태 자기 자신을 재차 트리거하는 걸 막기 위함(콤보 진행은 별도의 콤보창 로직이 담당).
+
+같은 패턴으로 `protected virtual bool CanJump => true;`(기본값 true)도 있다(2026-08-11 추가, [[project_unity_joseonsoul]] 공중 상태 작업). `PlayerBaseState.Update()`가 `if (CanJump && Jump.WasPerformedThisFrame()) OnJump();`를 공격 체크 **다음**에 확인해 공격·점프 동시 입력 시 공격이 우선하도록 보장한다(콜백 순서 의존 없음 — 상세는 `Design/AirState_Design.md` §8-1).
+
+**새 상태를 추가할 때(피격/처형/그로기 등) 체크리스트:** `CanBeInterruptedByAttack`과 `CanJump` **둘 다** 검토해서 필요하면 `false`로 오버라이드할 것 — 하나만 막고 다른 하나를 깜빡하면(예: 피격 경직 중인데 점프는 허용되는 버그) 놓치기 쉽다. CodexBot 리뷰 지적사항(`Design/AirState_Design.md` §8-5) — 실제 그런 상태가 추가되는 시점에 두 플래그가 모두 `false`로 오버라이드됐는지 확인하는 EditMode 테스트도 함께 추가할 것.
 
 ## 4. 콤보 진행 로직 (`PlayerComboAttackState`)
 
@@ -146,8 +158,17 @@ public override void Update()
 
 ## 5. 미구현/열린 이슈
 
-- 공중 상태(Jump/Fall) 없음 — `PlayerAnimationData`에 `Jump`/`Fall` 파라미터, `PlayerAirData.JumpForce`가 정의돼 있지만 어떤 State도 사용하지 않음.
 - `PlayerAttackState` 자체는 여전히 직접 인스턴스화되지 않음(콤보 없는 단발 공격 상태가 생기면 후보) — 다만 2026-08-06부터 Force 이벤트 공통 로직(`OnApplyForce`)의 베이스로 실제 사용 중.
-- 회피 종료 대기시간(0.3s 하드코딩) vs `avoid2runTransitionTime`(0.5, 데이터 정의만 있고 미사용) 불일치.
 - 공격 판정(히트박스/데미지 적용)은 이 상태머신 범위 밖 — `Design/CombatData_Design.md` 참조.
 - `DodgeAttack_PLACEHOLDER` Animator 상태는 전용 클립 없이 콤보 1타 클립을 재사용 중 — 전용 회피공격 애니메이션(구르며 찌르기 등) 준비되면 교체 필요.
+- **(2026-08-11 신규)** Jump/Fall/공중 3단 콤보(`AirAttackDatas`) 전용 애니메이션 클립이 프로젝트에 없음 — Animator의 `Air`/`AirAttack` 서브스테이트머신은 배선 완료(그래프/전환조건 전부 정상)됐지만 5개 상태 전부 Motion이 null이라 시각적으로 재생되는 클립이 없다. 클립 준비되면 각 상태 Motion만 교체(`DodgeAttack_PLACEHOLDER`와 동일 패턴).
+- **(2026-08-11 신규)** `ComboStateIndex`(int) → 직접 참조 전환은 여전히 미착수.
+
+## 6. 공중 상태(Jump/Fall) + 공중 콤보 (2026-08-11 추가)
+
+전체 설계·CodexBot 교차검증 내역은 `Design/AirState_Design.md` 참조(이 문서는 요약만 유지). 핵심:
+
+- `PlayerJumpState`/`PlayerFallState`(공용 부모 `PlayerAirState`)가 지상 Idle/Walk/Run에서 점프 입력 또는 벼랑 이탈(`!isGrounded`)로 진입, 정점 통과 시 자동으로 Jump→Fall, 착지(`isGrounded && Movement.y<=0`) 시 `ChangeToLocomotionState()`로 Idle/Walk/Run 복귀.
+- 공중에서도 공격 입력을 받아 `PlayerAirComboAttackState`(지상 콤보와 동일 구조, `PlayerComboAttackStateBase` 공용) 3단 콤보 진행. 모션 재생 중 `ForceReceiver.SuspendGravity()`로 제자리 호버, 콤보 미확정/3타 종료 시 `isGrounded`로 지상복귀/Fall 재낙하 분기.
+- 지상 공격류(`PlayerComboAttackState`/`PlayerDodgeAttackState`) 종료 분기도 이번에 `isGrounded` 기준으로 통일(예전엔 무조건 Idle) — 절벽 위에서 공격이 끝나면 Fall로 자연스럽게 이어짐.
+- Input Actions에 `Jump` 액션 신규(Space/게임패드 South).

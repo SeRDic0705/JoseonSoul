@@ -6,6 +6,8 @@ public class PlayerRunState : PlayerGroundState
     {
     }
 
+    protected override bool FacesLockedTarget => false;    // Run 중엔 락온 상태여도 이동 방향 기준 자유 회전 — Run 종료 시 다음 상태의 Rotate()가 다시 타겟을 향함
+
     public override void Enter()
     {
         stateMachine.MoveSpeedModifier = groundData.RunSpeed;

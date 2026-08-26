@@ -3,46 +3,152 @@ using Unity.Cinemachine;
 
 public class CinemachineCameraBridge : MonoBehaviour
 {
-    [field: SerializeField] public CameraSO Data { get; private set; }
-
+    [Tooltip("오빗 위치(Body) 계산에 쓰는 CinemachineOrbitalFollow. 락온 중 수평 각도를 이 컴포넌트의 HorizontalAxis에 직접 써서 정렬한다.")]
     [SerializeField] private CinemachineOrbitalFollow orbitalFollow;
-    [SerializeField] private CinemachineRotationComposer rotationComposer;
-    [SerializeField] private CinemachineDeoccluder deoccluder;
 
-    private void OnEnable()
+    [Header("Lock-On")]
+    [Tooltip("자유 시점 입력(마우스/스틱). 락온 중엔 비활성화해서 배경에서 오빗 축이 안 흐르도록 막고, 해제 시 원래 상태로 복원한다.")]
+    [SerializeField] private CinemachineInputAxisController orbitInputAxis;
+    [Tooltip("락온 대상/카메라 Follow 지점 조회에 쓰는 플레이어 참조.")]
+    [SerializeField] private Player player;
+    [Tooltip("락온 중 오빗 수평 각도가 목표각(타겟-플레이어-카메라 정렬)을 따라잡는 속도(SmoothDampAngle의 smoothTime, 초 단위). 값이 작을수록 빠르게 스냅, 클수록 천천히 부드럽게 돈다.")]
+    [SerializeField] private float horizontalDampTime = 0.15f;
+    [Tooltip("락온 중 카메라가 '이상적인 위치'(오빗 각도 정렬 결과)를 따라잡는 위치 감쇠(TrackerSettings.PositionDamping 대체값). 0에 가까울수록 즉시 스냅, 클수록 천천히 부드럽게 따라간다.")]
+    [SerializeField] private Vector3 lockedPositionDamping = new Vector3(0.1f, 0.1f, 0.1f);
+    [Tooltip("락온 중 카메라 조준(Aim)이 따라잡는 회전 감쇠(TrackerSettings.RotationDamping 대체값). 0에 가까울수록 즉시 스냅, 클수록 천천히 부드럽게 따라간다.")]
+    [SerializeField] private Vector3 lockedRotationDamping = new Vector3(0.1f, 0.1f, 0.1f);
+    [Tooltip("실제로 화면을 렌더링하는 카메라(WorldToViewportPoint 계산용). Camera.main을 매번 조회하지 않고 명시적으로 배선한다.")]
+    [SerializeField] private Camera renderCamera;
+
+    // 락온 타겟 UI 마커 등 다른 컴포넌트도 이 프로젝트의 실제 렌더 카메라를 동일하게 참조하도록 공개
+    // (Camera.main 태그 조회 대신 이 값을 재사용해 카메라 소스가 어긋나지 않게 함).
+    public Camera RenderCamera => renderCamera;
+    [Tooltip("락온 중 타겟이 위치할 목표 화면 세로 위치(뷰포트 기준 0=아래/1=위). 플레이어는 항상 RotationComposer가 화면 중앙(0.5)에 맞추므로, 이 값과 0.5의 차이가 목표 시차(gap)가 된다.")]
+    [SerializeField][Range(0f, 1f)] private float targetScreenY = 0.75f;
+    [Tooltip("타겟 화면 시차 오차를 얼마나 민감하게 VerticalAxis 속도로 변환할지(오차 1당 도/초). 값이 클수록 빨리 반응하지만 진동하기 쉽다.")]
+    [SerializeField] private float verticalCorrectionGain = 60f;
+    [Tooltip("VerticalAxis가 보정으로 움직일 수 있는 최대 속도(도/초). 과도한 오차에서도 튀지 않게 상한을 둔다.")]
+    [SerializeField] private float maxVerticalAxisSpeed = 40f;
+    [Tooltip("이 값보다 오차가 작으면 보정을 멈춘다(뷰포트 비율 기준) — 미세 진동/끝없는 미세 보정 방지.")]
+    [SerializeField] private float verticalErrorDeadZone = 0.01f;
+
+    private CinemachineCamera vcam;
+    private bool wasLocked;
+    private bool orbitInputAxisWasEnabled;    // 락온 진입 직전 enabled 상태(무조건 true로 복원하지 않기 위함)
+    private float horizontalAxisVelocity;
+    private Vector3 savedPositionDamping;    // 락온 해제 시 복원할 원래 TrackerSettings 감쇠값
+    private Vector3 savedRotationDamping;
+
+    private void Awake()
     {
-        Configure();
+        if (orbitalFollow != null) vcam = orbitalFollow.GetComponent<CinemachineCamera>();
     }
 
-    public void Configure()
+    private void Start()
     {
-        if (Data == null) return;
+        // player.CameraFollowTarget.FollowPoint는 그쪽 Awake()에서 생성되므로, 모든 Awake()가
+        // 끝난 뒤 실행이 보장되는 Start()에서 배선(실행 순서 의존 없이 안전).
+        if (vcam != null && player != null && player.CameraFollowTarget != null)
+            vcam.Follow = player.CameraFollowTarget.FollowPoint;
+    }
 
-        if (orbitalFollow != null)
+    private void Update()
+    {
+        UpdateLockOn();
+    }
+
+    // 타겟-플레이어-카메라가 일직선이 되도록 오빗 수평 각도를 매 프레임 보간(Design/LockOn_Design.md §4-1).
+    // 신규 vcam 없이 기존 CM_ThirdPersonCamera 하나만 사용 — LookAt은 락온 여부와 무관하게 원래 대상(플레이어) 유지.
+    private void UpdateLockOn()
+    {
+        if (player == null || player.LockOn == null || vcam == null || orbitalFollow == null) return;
+
+        Transform target = player.LockOn.CurrentTarget;
+        bool locked = target != null;
+
+        if (locked && !wasLocked)
         {
-            orbitalFollow.Radius = Data.cameraOffset.magnitude;
+            orbitInputAxisWasEnabled = orbitInputAxis != null && orbitInputAxis.enabled;
+            if (orbitInputAxis != null) orbitInputAxis.enabled = false;
 
-            var verticalAxis = orbitalFollow.VerticalAxis;
-            verticalAxis.Range = Data.pitchLimits;
-            verticalAxis.Center = (Data.pitchLimits.x + Data.pitchLimits.y) * 0.5f;
-            orbitalFollow.VerticalAxis = verticalAxis;
+            // TrackerSettings의 Position/RotationDamping이 우리가 맞춰둔 오빗 각도 위에 한 번 더 지연을
+            // 걸어서, 플레이어가 움직이는 동안엔 정렬이 계속 뒤처지는 원인이었다 — 락온 중엔 튜닝 가능한 값으로 대체.
+            var tracker = orbitalFollow.TrackerSettings;
+            savedPositionDamping = tracker.PositionDamping;
+            savedRotationDamping = tracker.RotationDamping;
+        }
+        else if (!locked && wasLocked)
+        {
+            if (orbitInputAxis != null) orbitInputAxis.enabled = orbitInputAxisWasEnabled;
+
+            var tracker = orbitalFollow.TrackerSettings;
+            tracker.PositionDamping = savedPositionDamping;
+            tracker.RotationDamping = savedRotationDamping;
+            orbitalFollow.TrackerSettings = tracker;
         }
 
-        if (rotationComposer != null)
+        if (locked)
         {
-            var composition = rotationComposer.Composition;
-            composition.DeadZone.Enabled = true;
-            composition.DeadZone.Size = new Vector2(Data.deadZoneRadius * 2f, Data.deadZoneRadius * 2f);
-            rotationComposer.Composition = composition;
+            // 플레이 중 lockedPositionDamping/lockedRotationDamping을 바꿔도 즉시 반영되도록 매 프레임 동기화.
+            var tracker = orbitalFollow.TrackerSettings;
+            tracker.PositionDamping = lockedPositionDamping;
+            tracker.RotationDamping = lockedRotationDamping;
+            orbitalFollow.TrackerSettings = tracker;
         }
 
-        if (deoccluder != null)
-        {
-            var avoid = deoccluder.AvoidObstacles;
-            avoid.CameraRadius = Data.cameraRadius;
-            deoccluder.AvoidObstacles = avoid;
-            deoccluder.CollideAgainst = Data.collisionMask;
-            deoccluder.MinimumDistanceFromTarget = Mathf.Max(Data.collisionOffset, 0.01f);
-        }
+        wasLocked = locked;
+
+        if (!locked) return;
+
+        Vector3 toTarget = target.position - player.transform.position;
+        toTarget.y = 0f;
+        if (toTarget.sqrMagnitude < 0.0001f) return;    // 플레이어-타겟 XZ 거리 0 근접 — 이번 프레임 각도 갱신 스킵(이전 각도 유지)
+
+        // BindingMode=WorldSpace(§4-1 실측)이라 플레이어 회전과 무관하게 성립하는 월드 yaw 공식
+        float targetAngle = Mathf.Atan2(toTarget.x, toTarget.z) * Mathf.Rad2Deg;
+
+        orbitalFollow.HorizontalAxis.Value = Mathf.SmoothDampAngle(
+            orbitalFollow.HorizontalAxis.Value, targetAngle, ref horizontalAxisVelocity, horizontalDampTime);
+
+        UpdateVerticalFraming();
+    }
+
+    // 타겟이 화면 세로 targetScreenY 지점에 오도록 오빗 높이(VerticalAxis)를 보정한다. 플레이어는
+    // RotationComposer가 위치 무관하게 항상 화면 중앙으로 재조준해주므로, 카메라 궤도 높이만 바뀌어도
+    // 플레이어는 계속 중앙에 남고 타겟만 시차(parallax)로 화면에서 위아래로 움직인다 — 그 시차를 오차
+    // 신호로 써서 원하는 화면 위치로 수렴시킨다. 절대 화면Y가 아니라 "플레이어 대비 상대 오차"를 쓰는
+    // 이유: RotationComposer 자체의 댐핑으로 플레이어가 잠깐 중앙에서 벗어나는 과도응답까지 이 축이
+    // 따라가며 두 제어기가 서로 간섭하는 걸 막기 위함(CodexBot 교차검증 반영).
+    private void UpdateVerticalFraming()
+    {
+        if (renderCamera == null || vcam.LookAt == null || player.LockOn.LockPoint == null) return;
+
+        Vector3 targetVp = renderCamera.WorldToViewportPoint(player.LockOn.LockPoint.position);
+        Vector3 playerVp = renderCamera.WorldToViewportPoint(vcam.LookAt.position);
+        if (targetVp.z <= 0f || playerVp.z <= 0f) return;    // 카메라 뒤쪽 — 이번 프레임 보정 스킵
+
+        float desiredGap = targetScreenY - 0.5f;    // 플레이어(화면 중앙 0.5) 대비 목표 시차
+        float actualGap = targetVp.y - playerVp.y;
+        float error = desiredGap - actualGap;
+
+        if (Mathf.Abs(error) <= verticalErrorDeadZone) return;
+
+        float speed = Mathf.Clamp(error * verticalCorrectionGain, -maxVerticalAxisSpeed, maxVerticalAxisSpeed);
+        float newValue = orbitalFollow.VerticalAxis.Value + speed * Time.deltaTime;
+        orbitalFollow.VerticalAxis.Value = Mathf.Clamp(newValue, orbitalFollow.VerticalAxis.Range.x, orbitalFollow.VerticalAxis.Range.y);
+    }
+
+    // 플레이어 이동/회전용 평면 방향 basis. Camera.main.transform.forward는 CinemachineDeoccluder가 벽 회피로
+    // 카메라 위치를 보정할 때 함께 흔들려서(Design 문서 미작성, 2026-08-12 Discord 진단 참조 — 벽 근처에서
+    // 이동 방향이 최대 반바퀴 가까이 진동하는 피드백 루프의 원인이었음) 이동 방향 계산에 부적합하다.
+    // 대신 Deoccluder의 영향을 받지 않는 HorizontalAxis.Value(오빗 각도)에서 직접 유도한다.
+    // BindingMode=WorldSpace(§4-1 실측, UpdateLockOn()의 Atan2 공식과 정확히 역연산 관계) 전제 — 다른
+    // BindingMode로 바뀌면 이 공식도 함께 갱신해야 한다.
+    public (Vector3 forward, Vector3 right) GetPlanarMoveBasis()
+    {
+        if (orbitalFollow == null) return (Vector3.forward, Vector3.right);
+
+        Quaternion yawRot = Quaternion.Euler(0f, orbitalFollow.HorizontalAxis.Value, 0f);
+        return (yawRot * Vector3.forward, yawRot * Vector3.right);
     }
 }

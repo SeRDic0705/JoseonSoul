@@ -28,4 +28,16 @@ public class AttackAnimationEventRelay : MonoBehaviour
         if (player.StateMachine.CurrentState is IComboWindowEventReceiver receiver)
             receiver.OnCloseComboWindow();
     }
+
+    public void OnOpenHitWindow()
+    {
+        if (player.StateMachine.CurrentState is IHitWindowEventReceiver receiver)
+            receiver.OnOpenHitWindow();
+    }
+
+    public void OnCloseHitWindow()
+    {
+        if (player.StateMachine.CurrentState is IHitWindowEventReceiver receiver)
+            receiver.OnCloseHitWindow();
+    }
 }
